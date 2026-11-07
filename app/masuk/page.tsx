@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Masuk" };
 async function VerificationMessage({ params }: { params: PageProps<"/masuk">["searchParams"] }) {
   const { verifikasi } = await params;
   return verifikasi === "1" ? (
-    <p className="notice" role="status">Jika emailmu sudah terverifikasi, masuk dengan email dan password. Jika tautan kedaluwarsa, coba daftar kembali.</p>
+    <p className="notice" role="status">Tautan verifikasi email tidak dapat digunakan.</p>
   ) : null;
 }
 

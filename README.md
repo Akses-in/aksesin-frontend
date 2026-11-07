@@ -14,7 +14,7 @@ Auth dan preferensi diakses dari server Next.js dengan sesi pengguna. Skema pref
 
 ## OTP WhatsApp lewat Fonnte
 
-Pengguna memasukkan nama dan nomor WhatsApp, lalu memasukkan OTP di layar verifikasi. Setelah kode benar, mereka membuat password di layar berikutnya. Setelah verifikasi, mereka bisa masuk dengan nomor WhatsApp dan password. Akun yang dibuat lewat email tetap bisa masuk dengan email dan password.
+Untuk masuk, pengguna memasukkan nomor WhatsApp yang sudah terverifikasi di akun, lalu kode OTP enam digit. Saat mendaftar, pengguna masih mengisi nama, memverifikasi nomor WhatsApp, dan membuat password.
 
 Jalankan backend Express sesuai [panduan backend](../aksesin-backend/README.md#otp-whatsapp-lewat-fonnte). Frontend menggunakan `BACKEND_URL=http://127.0.0.1:3000` secara default.
 
