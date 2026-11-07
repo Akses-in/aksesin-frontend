@@ -26,7 +26,7 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
   const { supabase, user } = await verifiedAccount();
   const { data, error } = await supabase.from("accessibility_preferences")
     .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>();
-  const { keluar } = await params;
+  const { keluar, tersimpan } = await params;
   const name = accountName(user);
   const hasVerifiedPhone = Boolean(user.phone && user.phone_confirmed_at);
   const firstName = name.split(/\s+/)[0];
@@ -58,6 +58,12 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
             <h1>Ringkasan akun &amp; preferensi</h1>
             <p>{firstName ? `Halo, ${firstName}. ` : ""}Ini ringkasan akun, status onboarding, dan pilihan aksesibilitasmu.</p>
           </div>
+          {(tersimpan === "nama" || tersimpan === "nomor") && (
+            <p className="notice icon-line" role="status">
+              <Icon name="summary-circle-check" size={20} />
+              {tersimpan === "nama" ? "Nama sudah diperbarui." : "Nomor WhatsApp sudah diperbarui."}
+            </p>
+          )}
           {keluar === "gagal" && <p className="error" role="alert">Sesi belum dapat diakhiri. Coba keluar lagi.</p>}
           <div className="notice icon-line">
             <Icon name="summary-circle-check" size={20} />
@@ -80,6 +86,7 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
               <div><dt>{hasVerifiedPhone ? "Nomor WhatsApp" : "Email"}</dt><dd>{hasVerifiedPhone ? `+${user.phone?.replace(/^\+/, "")}` : user.email}</dd></div>
             </dl>
             <p className="status-footnote small muted">Registrasi selesai. {hasVerifiedPhone ? "Nomor WhatsApp" : "Email"} sudah terverifikasi.</p>
+            <Link className="button secondary account-edit-link" href="/akun/edit">Edit data akun</Link>
           </StatusCard>
 
           {error ? (

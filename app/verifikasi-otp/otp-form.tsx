@@ -4,13 +4,21 @@ import { useState } from "react";
 import { resendWhatsAppOtp, verifyWhatsAppOtp } from "../actions";
 import { ActionForm } from "../_components/action-form";
 
-export function OtpForm() {
+export function OtpForm({
+  verifyAction = verifyWhatsAppOtp,
+  resendAction = resendWhatsAppOtp,
+  submitLabel = "Verifikasi kode",
+}: {
+  verifyAction?: (form: FormData) => Promise<string>;
+  resendAction?: () => Promise<string>;
+  submitLabel?: string;
+}) {
   const [code, setCode] = useState("");
   const [caret, setCaret] = useState(0);
 
   return (
     <>
-      <ActionForm action={verifyWhatsAppOtp} className="credentials-form">
+      <ActionForm action={verifyAction} className="credentials-form">
         {(pending, error) => (
           <>
             <div className="field">
@@ -36,12 +44,12 @@ export function OtpForm() {
             </div>
             {error && <p id="otp-error" role="alert" className="error">{error}</p>}
             <button type="submit" className="button primary" disabled={pending}>
-              {pending ? "Memeriksa…" : "Verifikasi kode"}
+              {pending ? "Memeriksa…" : submitLabel}
             </button>
           </>
         )}
       </ActionForm>
-      <ActionForm action={resendWhatsAppOtp} className="otp-resend">
+      <ActionForm action={resendAction} className="otp-resend">
         {(pending, error) => (
           <>
             <p className="small muted">Belum menerima kode?</p>

@@ -115,7 +115,9 @@ export async function resendWhatsAppOtp() {
 export async function signOut() {
   const supabase = await serverSupabase(true);
   const { error } = await supabase.auth.signOut({ scope: "local" });
-  redirect(error ? "/akun?keluar=gagal" : "/masuk");
+  if (error) redirect("/akun?keluar=gagal");
+  await clearPendingChallenge("phoneChange");
+  redirect("/masuk");
 }
 
 export async function savePreferences(form: FormData) {

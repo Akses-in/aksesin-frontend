@@ -243,3 +243,5 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .otp-code:has(input[aria-invalid="true"]) .otp-digit { border-color: #a62d26; }
 .otp-resend { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
 .otp-resend .error { flex-basis: 100%; }
+
+.account-edit-link { justify-self: start; }
