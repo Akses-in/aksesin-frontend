@@ -6,7 +6,7 @@ import { register, signIn } from "../actions";
 import { ActionForm } from "./action-form";
 import { Icon } from "./site";
 
-export function PasswordField({ confirmation = false, login = false }: { confirmation?: boolean; login?: boolean }) {
+export function PasswordField({ confirmation = false }: { confirmation?: boolean }) {
   const [visible, setVisible] = useState(false);
   const field = confirmation ? "confirmation" : "password";
 
@@ -16,10 +16,9 @@ export function PasswordField({ confirmation = false, login = false }: { confirm
       <div className="input-shell">
         <Icon name="register-lock-keyhole" size={18} />
         <input id={field} name={field} type={visible ? "text" : "password"}
-          placeholder={confirmation ? "Ulangi password" : login ? "Masukkan password" : "Buat password"}
-          autoComplete={login ? "current-password" : "new-password"} required
-          minLength={login ? undefined : 8} maxLength={login ? 256 : 72}
-          aria-describedby={!confirmation && !login ? "password-hint" : undefined}
+          placeholder={confirmation ? "Ulangi password" : "Buat password"}
+          autoComplete="new-password" required minLength={8} maxLength={72}
+          aria-describedby={!confirmation ? "password-hint" : undefined}
         />
         <button className="password-toggle" type="button" aria-controls={field} aria-pressed={visible}
           aria-label={confirmation ? "Tampilkan konfirmasi password" : "Tampilkan password"}
@@ -27,13 +26,12 @@ export function PasswordField({ confirmation = false, login = false }: { confirm
           {visible ? <Icon name="summary-eye" size={15} /> : <Icon name="register-eye-off" size={18} />}
         </button>
       </div>
-      {!confirmation && !login && <p id="password-hint" className="small muted">Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.</p>}
+      {!confirmation && <p id="password-hint" className="small muted">Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.</p>}
     </div>
   );
 }
 
 export function CredentialsForm({ login = false }: { login?: boolean }) {
-  const label = login ? "Nomor WhatsApp atau email" : "Nomor WhatsApp";
   return (
     <ActionForm action={login ? signIn : register} className="credentials-form">
       {(pending, error) => (
@@ -49,28 +47,25 @@ export function CredentialsForm({ login = false }: { login?: boolean }) {
               </div>
             )}
             <div className="field">
-              <label htmlFor="identity">{label}</label>
+              <label htmlFor="identity">Nomor WhatsApp</label>
               <div className="input-shell">
                 <input id="identity" name="identity"
-                  type={login ? "text" : "tel"}
-                  placeholder={login ? "Nomor yang kamu daftarkan atau email lama" : "081234567890"}
-                  autoComplete={login ? "username" : "tel"}
-                  autoCapitalize="none" required maxLength={login ? 254 : 24}
+                  type="tel" placeholder="081234567890" autoComplete="tel"
+                  required maxLength={24}
                   aria-describedby="identity-hint"
                 />
               </div>
               <p id="identity-hint" className="small muted">
-                {login ? "Kalau akunmu dibuat lewat email, masuk dengan email yang sama." : "Kami akan mengirim kode verifikasi ke nomor ini."}
+                {login ? "Gunakan nomor WhatsApp yang terdaftar di akunmu." : "Kami akan mengirim kode verifikasi ke nomor ini."}
               </p>
             </div>
-            {login && <PasswordField login />}
           </fieldset>
 
           {!login && <p className="small muted">Dengan membuat akun, kamu menyetujui <Link href="/ketentuan">Ketentuan Penggunaan</Link> dan telah membaca <Link href="/privasi">Kebijakan Privasi</Link>.</p>}
           {error && <p className="error" role="alert">{error}</p>}
           <div className="register-actions">
             <button className="button primary" type="submit" disabled={pending}>
-              {pending ? "Memproses…" : login ? "Masuk" : "Kirim kode WhatsApp"}
+              {pending ? "Mengirim…" : "Kirim kode WhatsApp"}
               <Icon name="register-arrow-right" size={17} />
             </button>
             {!login && <p className="icon-line small muted"><Icon name="register-shield-check" size={17} />Data disabilitas tidak diperlukan untuk membuat akun.</p>}

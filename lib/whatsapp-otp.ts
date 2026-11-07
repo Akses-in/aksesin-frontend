@@ -3,6 +3,7 @@ import { appOrigin } from "./supabase";
 
 const challengeCookies = {
   registration: "aksesin-otp-challenge",
+  login: "aksesin-login-challenge",
   phoneChange: "aksesin-phone-change",
 };
 type ChallengePurpose = keyof typeof challengeCookies;
@@ -39,7 +40,7 @@ export async function clearPendingChallenge(purpose: ChallengePurpose = "registr
   (await cookies()).delete(challengeCookies[purpose]);
 }
 
-type WhatsAppAction = "start" | "verify" | "complete" | "resend" | "login" | `change/${"start" | "verify" | "resend"}`;
+type WhatsAppAction = "start" | "verify" | "complete" | "resend" | `${"change" | "login"}/${"start" | "verify" | "resend"}`;
 
 export async function whatsappRequest(action: WhatsAppAction, input: object, accessToken?: string) {
   const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:3000";

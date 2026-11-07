@@ -6,10 +6,6 @@ import { accessibilityOptions, disabilityOptions } from "@/lib/preferences";
 import { serverSupabase, verifiedAccount } from "@/lib/supabase";
 import { clearPendingChallenge, normalizePhone, pendingChallenge, setPendingChallenge, whatsappRequest } from "@/lib/whatsapp-otp";
 
-function validEmail(email: string) {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 export async function register(form: FormData) {
   const name = String(form.get("name") ?? "").trim();
   const phone = normalizePhone(String(form.get("identity") ?? ""));
@@ -27,32 +23,50 @@ export async function register(form: FormData) {
 }
 
 export async function signIn(form: FormData) {
-  const identity = String(form.get("identity") ?? "").trim();
-  const phone = normalizePhone(identity);
-  const password = String(form.get("password") ?? "");
-  if ((!phone && !validEmail(identity)) || !password || password.length > 256) {
-    return "Masukkan nomor WhatsApp atau email dan password.";
-  }
+  const phone = normalizePhone(String(form.get("identity") ?? ""));
+  if (!phone) return "Masukkan nomor WhatsApp yang valid, misalnya 081234567890.";
+
+  const response = await whatsappRequest("login/start", { phone });
+  if (response?.status === 404) return "Gunakan nomor WhatsApp yang sudah terverifikasi di akunmu.";
+  if (response?.status === 429) return "Tunggu sebelum meminta kode baru.";
+  if (!response?.ok) return "Kode WhatsApp belum dapat dikirim. Coba lagi nanti.";
+
+  const { challengeId } = await response.json();
+  await setPendingChallenge(phone, challengeId, undefined, "login");
+  redirect("/masuk/verifikasi");
+}
+
+export async function verifySignInOtp(form: FormData) {
+  const pending = await pendingChallenge("login");
+  if (!pending) return "Sesi verifikasi berakhir. Kembali ke halaman masuk.";
+  const otp = String(form.get("otp") ?? "").trim();
+  if (!/^\d{6}$/.test(otp)) return "Masukkan kode 6 digit dari WhatsApp.";
+
+  const { phone, challengeId } = pending;
+  const response = await whatsappRequest("login/verify", { phone, challengeId, otp });
+  if (response?.status === 400) return "Kode salah atau kedaluwarsa. Periksa kode atau minta kode baru.";
+  if (response?.status === 429) return "Terlalu banyak percobaan. Coba lagi nanti.";
+  if (!response?.ok) return "Kode belum dapat diperiksa. Coba lagi.";
 
   const supabase = await serverSupabase(true);
-  if (phone) {
-    const response = await whatsappRequest("login", { phone, password });
-    if (response?.status === 429) return "Terlalu banyak percobaan. Coba lagi nanti.";
-    if (!response || response.status >= 500) return "Layanan masuk lewat WhatsApp sedang tidak tersedia.";
-    if (!response.ok) return "Periksa nomor WhatsApp dan password akunmu.";
-    const { error } = await supabase.auth.setSession(await response.json());
-    if (error) return "Sesi masuk belum dapat dibuat. Coba lagi.";
-  } else {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: identity, password });
-    if (error?.status === 429) return "Terlalu banyak percobaan. Coba lagi nanti.";
-    if (!data.user?.email_confirmed_at) {
-      if (data.session) await supabase.auth.signOut({ scope: "local" });
-      return "Periksa email, password, dan status verifikasi akunmu.";
-    }
-  }
-
+  const { error } = await supabase.auth.setSession(await response.json());
+  if (error) return "Sesi masuk belum dapat dibuat. Minta kode baru.";
+  await clearPendingChallenge("login");
   const { data: preferences } = await supabase.from("accessibility_preferences").select("user_id").maybeSingle();
   redirect(preferences ? "/akun" : "/onboarding");
+}
+
+export async function resendSignInOtp() {
+  const pending = await pendingChallenge("login");
+  if (!pending) return "Sesi verifikasi berakhir. Kembali ke halaman masuk.";
+  const { phone, challengeId } = pending;
+  const response = await whatsappRequest("login/resend", { phone, challengeId });
+  if (response?.status === 429) return "Tunggu sebelum meminta kode baru.";
+  if (response?.status === 400) return "Sesi verifikasi berakhir. Kembali ke halaman masuk.";
+  if (!response?.ok) return "Kode baru belum dapat dikirim. Coba lagi nanti.";
+
+  await setPendingChallenge(phone, challengeId, undefined, "login");
+  redirect("/masuk/verifikasi?kirim=1");
 }
 
 export async function verifyWhatsAppOtp(form: FormData) {
@@ -88,7 +102,7 @@ export async function completeWhatsAppRegistration(form: FormData) {
 
   const response = await whatsappRequest("complete", { ...pending, password });
   if (response?.status === 400) return "Sesi verifikasi berakhir. Kembali ke halaman daftar.";
-  if (response?.status === 409) return "Jika nomor ini sudah terdaftar, masuk dengan password akunmu.";
+  if (response?.status === 409) return "Nomor ini sudah terdaftar. Masuk dengan kode WhatsApp.";
   if (response?.status === 422) return "Gunakan password lain yang lebih sulit ditebak.";
   if (!response?.ok) return "Akun belum dapat dibuat. Coba lagi.";
 
@@ -116,6 +130,7 @@ export async function signOut() {
   const supabase = await serverSupabase(true);
   const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) redirect("/akun?keluar=gagal");
+  await clearPendingChallenge("login");
   await clearPendingChallenge("phoneChange");
   redirect("/masuk");
 }
