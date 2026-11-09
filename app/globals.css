@@ -245,3 +245,59 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .otp-resend .error { flex-basis: 100%; }
 
 .account-edit-link { justify-self: start; }
+
+/* Digital Accessibility Card & Status Notifications (PBI-17 & PBI-18) */
+.badge.warning { background: #fef4e6; color: #8a4b08; }
+.badge.danger { background: #fff1ed; color: #922c19; }
+.file-upload-shell {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 8px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--input);
+}
+.file-upload-shell:focus-within {
+  border-color: var(--green);
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+.file-upload-shell input[type="file"] { width: 100%; min-height: 32px; cursor: pointer; }
+.consent-choice { align-items: flex-start; line-height: 1.45; }
+.consent-choice .checkbox { margin-top: 2px; }
+.card-edit-disclosure > summary { list-style: none; width: fit-content; }
+.card-edit-disclosure > summary::-webkit-details-marker { display: none; }
+.card-edit-body { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.cancel-action-area { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.cancel-card-form { display: grid; gap: 10px; justify-items: start; }
+.danger-outline { color: #922c19; border-color: #f3c6bc; }
+.danger-outline:hover:not(:disabled) { border-color: #922c19; color: #731f10; background: #fff1ed; }
+.notification-list { display: grid; gap: 12px; }
+.notification-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input);
+}
+.notification-item.unread {
+  border-color: var(--green);
+  background: white;
+}
+.notification-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}

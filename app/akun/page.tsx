@@ -42,6 +42,7 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
           <p className="eyebrow muted">Pengaturan</p>
           <nav aria-label="Pengaturan akun">
             <Link className="icon-line current" aria-current="page" href="/akun"><Icon name="summary-user-round" size={20} />Akun & preferensi</Link>
+            <Link className="icon-line" href="/kartu-aksesibilitas"><Icon name="register-shield-check" size={20} />Kartu aksesibilitas</Link>
             <Link className="icon-line" href="/bantuan"><Icon name="summary-circle-help" size={20} />Bantuan</Link>
           </nav>
           <div className="sidebar-note small muted">
