@@ -50,7 +50,7 @@ async function CardApplicationContent({
 
   let cards: DigitalCardRow[] = [];
   let notifications: CardNotificationRow[] = [];
-  let activeEvidence: CardEvidenceRow | null = null;
+  let activeEvidence: CardEvidenceRow[] = [];
   let cardsLoadFailed = false;
   let notificationsLoadFailed = false;
 
@@ -70,7 +70,7 @@ async function CardApplicationContent({
       };
       const mappedCards = (cardsJson.data ?? []).map(mapBackendCardToRow);
       cards = mappedCards.map((item) => item.card);
-      activeEvidence = mappedCards[0]?.evidence ?? null;
+      activeEvidence = mappedCards[0]?.evidence ?? [];
       notifications = (notifJson.data?.items ?? []).map(
         mapBackendNotificationToRow,
       );
@@ -120,10 +120,8 @@ async function CardApplicationContent({
         .select("*")
         .eq("card_id", firstCard.id)
         .eq("user_id", user.id)
-        .order("uploaded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle<CardEvidenceRow>();
-      activeEvidence = evidenceData ?? null;
+        .order("uploaded_at", { ascending: false });
+      activeEvidence = (evidenceData as CardEvidenceRow[] | null) ?? [];
     }
   }
 
@@ -253,7 +251,7 @@ function CardDetailSection({
   evidence,
 }: {
   card: DigitalCardRow;
-  evidence: CardEvidenceRow | null;
+  evidence: CardEvidenceRow[];
 }) {
   const statusMeta = cardStatusMap[card.status] ?? cardStatusMap.pending;
   const categoryLabel =
@@ -262,9 +260,6 @@ function CardDetailSection({
   const selectedNeeds = accessibilityOptions.filter(([val]) =>
     card.needs?.includes(val),
   );
-  const documentTypeLabel =
-    documentTypeOptions.find(([val]) => val === evidence?.document_type)?.[1] ??
-    evidence?.document_type;
   const editable = canEditCardStatus(card.status);
   const cancellable = canCancelCardStatus(card.status);
 
@@ -342,11 +337,24 @@ function CardDetailSection({
         <div>
           <dt>Dokumen pendukung terlampir</dt>
           <dd>
-            {evidence ? (
-              <span>
-                {evidence.file_name} ({documentTypeLabel} ·{" "}
-                {formatFileSize(evidence.file_size)})
-              </span>
+            {evidence.length > 0 ? (
+              <ul>
+                {evidence.map((file) => (
+                  <li key={file.id}>
+                    {file.file_name} ({documentTypeOptions.find(([value]) => value === file.document_type)?.[1]} ·{" "}
+                    {formatFileSize(file.file_size)}){" "}
+                    <a
+                      className="inline-link"
+                      href={`/kartu-aksesibilitas/dokumen/${card.id}/${file.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Lihat pratinjau ${file.file_name} (tab baru)`}
+                    >
+                      Lihat pratinjau
+                    </a>
+                  </li>
+                ))}
+              </ul>
             ) : (
               <span className="muted">Tidak ada dokumen aktif (telah ditarik/dihapus)</span>
             )}
