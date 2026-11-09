@@ -5,7 +5,7 @@ import {
   disabilityCategoryOptions,
   documentTypeOptions,
   formatFileSize,
-  MAX_CARD_DOCUMENT_BYTES,
+  validateDocumentFiles,
   type CardEvidenceRow,
   type DigitalCardRow,
 } from "@/lib/digital-card";
@@ -21,35 +21,26 @@ import {
 export function CardApplicationForm({
   defaultName,
   existingCard,
-  existingEvidence,
+  existingEvidence = [],
 }: {
   defaultName: string;
   existingCard?: DigitalCardRow;
-  existingEvidence?: CardEvidenceRow | null;
+  existingEvidence?: CardEvidenceRow[];
 }) {
   const isEdit = Boolean(existingCard);
   const [fullName, setFullName] = useState(existingCard?.full_name ?? defaultName);
   const [category, setCategory] = useState<string>(existingCard?.disability_category ?? "");
   const [documentType, setDocumentType] = useState<string>(
-    existingEvidence?.document_type ?? "surat_keterangan",
+    existingEvidence[0]?.document_type ?? "surat_keterangan",
   );
   const [notes, setNotes] = useState(existingCard?.notes ?? "");
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileClientError, setFileClientError] = useState("");
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    setFileClientError("");
-    const file = event.target.files?.[0];
-    if (!file) {
-      setSelectedFile(null);
-      return;
-    }
-    if (file.size > MAX_CARD_DOCUMENT_BYTES) {
-      setFileClientError("Ukuran berkas melebihi batas maksimal 5 MB.");
-      setSelectedFile(null);
-      return;
-    }
-    setSelectedFile({ name: file.name, size: file.size });
+    const files = Array.from(event.target.files ?? []);
+    setFileClientError(validateDocumentFiles(files, false));
+    setSelectedFiles(files);
   }
 
   return (
@@ -162,7 +153,7 @@ export function CardApplicationForm({
           <div className="field">
             <label htmlFor="supporting_document">
               {isEdit
-                ? "Unggah dokumen pendukung baru (opsional jika tidak diganti)"
+                ? "Ganti dokumen pendukung (opsional)"
                 : "Unggah dokumen pendukung"}
             </label>
             <div className="file-upload-shell">
@@ -170,6 +161,7 @@ export function CardApplicationForm({
                 id="supporting_document"
                 name="supporting_document"
                 type="file"
+                multiple
                 required={!isEdit}
                 disabled={pending}
                 accept=".pdf,application/pdf,image/jpeg,image/png,image/webp"
@@ -178,19 +170,21 @@ export function CardApplicationForm({
               />
             </div>
             <p id="supporting-document-hint" className="small muted">
-              Format yang didukung: PDF, JPG, PNG, atau WebP (maksimal 5 MB).
+              Pilih hingga 3 file PDF, JPG, PNG, atau WebP dengan jenis dokumen di atas. Maksimal 5 MB per file.
+              {isEdit && " Pilihan baru akan menggantikan semua dokumen sebelumnya."}
             </p>
-            {existingEvidence && !selectedFile && (
-              <p className="small green" role="status">
-                Dokumen saat ini: <strong>{existingEvidence.file_name}</strong> (
-                {formatFileSize(existingEvidence.file_size)})
-              </p>
-            )}
-            {selectedFile && (
-              <p className="small green" role="status">
-                Berkas dipilih: <strong>{selectedFile.name}</strong> (
-                {formatFileSize(selectedFile.size)})
-              </p>
+            {selectedFiles.length > 0 ? (
+              <ul className="small green" aria-label="Berkas dipilih">
+                {selectedFiles.map((file, index) => (
+                  <li key={`${index}-${file.name}`}>{file.name} ({formatFileSize(file.size)})</li>
+                ))}
+              </ul>
+            ) : existingEvidence.length > 0 && (
+              <ul className="small green" aria-label="Dokumen saat ini">
+                {existingEvidence.map((file) => (
+                  <li key={file.id}>{file.file_name} ({formatFileSize(file.file_size)})</li>
+                ))}
+              </ul>
             )}
             {fileClientError && (
               <p className="error" role="alert">

@@ -233,6 +233,17 @@ export function validateDocumentFile(
   return { ok: true, file };
 }
 
+export function validateDocumentFiles(files: File[], required: boolean): string {
+  if (files.length > 3) return "Unggah maksimal tiga dokumen pendukung.";
+  if (required && !files.length) return "Unggah minimal satu dokumen pendukung.";
+
+  for (const file of files) {
+    const result = validateDocumentFile(file, true);
+    if (!result.ok) return `${file.name}: ${result.error}`;
+  }
+  return "";
+}
+
 export type BackendCardEvidence = {
   id: string;
   cardId: string;
@@ -261,6 +272,7 @@ export type BackendCardApplication = {
   verifiedAt: string | null;
   cancelledAt: string | null;
   evidence: BackendCardEvidence | null;
+  documents?: BackendCardEvidence[];
 };
 
 export type BackendCardNotification = {
@@ -279,7 +291,7 @@ export type BackendCardNotification = {
 
 export function mapBackendCardToRow(item: BackendCardApplication): {
   card: DigitalCardRow;
-  evidence: CardEvidenceRow | null;
+  evidence: CardEvidenceRow[];
 } {
   return {
     card: {
@@ -298,19 +310,17 @@ export function mapBackendCardToRow(item: BackendCardApplication): {
       verified_at: item.verifiedAt,
       cancelled_at: item.cancelledAt,
     },
-    evidence: item.evidence
-      ? {
-          id: item.evidence.id,
-          card_id: item.evidence.cardId,
-          user_id: item.evidence.userId,
-          document_type: item.evidence.documentType,
-          file_name: item.evidence.fileName,
-          mime_type: item.evidence.mimeType,
-          file_size: item.evidence.fileSize,
-          file_path: item.evidence.filePath,
-          uploaded_at: item.evidence.uploadedAt,
-        }
-      : null,
+    evidence: (item.documents ?? (item.evidence ? [item.evidence] : [])).map((document) => ({
+      id: document.id,
+      card_id: document.cardId,
+      user_id: document.userId,
+      document_type: document.documentType,
+      file_name: document.fileName,
+      mime_type: document.mimeType,
+      file_size: document.fileSize,
+      file_path: document.filePath,
+      uploaded_at: document.uploadedAt,
+    })),
   };
 }
 
