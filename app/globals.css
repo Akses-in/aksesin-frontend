@@ -280,6 +280,20 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .activity-title { font-weight: 600; }
 .activity-message { color: var(--muted); font-size: 14px; }
 
+.place-search { display: grid; gap: 12px; }
+.place-search .button { justify-self: start; }
+.place-group { display: grid; gap: 8px; }
+.place-group-title { color: var(--muted); font-size: 13px; font-weight: 600; }
+.place-results, .saved-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.place-results { border-top: 1px solid var(--border); }
+.place-results li, .saved-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.place-results li:last-child, .saved-item:last-child { border-bottom: 0; }
+.place-name { font-weight: 600; }
+.place-meta { color: var(--muted); font-size: 13px; }
+.place-saved { align-self: center; }
+.saved-confirm { display: flex; align-items: center; gap: 8px; }
+.text-danger { color: #922c19; }
+
 @media (max-width: 600px) {
   .sidebar-privacy { padding: 10px 0 0; }
   .profile-block { padding: 20px 18px; }
