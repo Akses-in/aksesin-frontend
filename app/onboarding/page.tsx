@@ -43,13 +43,13 @@ async function OnboardingContent({ params }: { params: PageProps<"/onboarding">[
               <p className="error" role="alert">Preferensi belum dapat dimuat. Coba lagi sebelum mengubah isian.</p>
               <div className="button-row">
                 <RetryButton />
-                <Link className="button primary" href="/akun">Ke ringkasan akun</Link>
+                <Link className="button primary" href="/akun">Ke profil saya</Link>
               </div>
             </div>
           ) : (
             <>
               <p className="icon-line small muted"><Icon name="preferences-info" size={15} />Semua isian bersifat opsional</p>
-              {lewati === "gagal" && <p className="error" role="alert">Status belum tersimpan. Coba lewati lagi atau <Link href="/akun">buka ringkasan akun</Link>.</p>}
+              {lewati === "gagal" && <p className="error" role="alert">Status belum tersimpan. Coba lewati lagi atau <Link href="/akun">buka profil saya</Link>.</p>}
               <form id="skip-preferences" action={skipPreferences} />
               <PreferencesForm preferences={data} />
             </>
