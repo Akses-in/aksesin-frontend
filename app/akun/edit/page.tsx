@@ -20,7 +20,7 @@ async function EditAccount() {
           <h1>Edit data akun</h1>
         </div>
         <ProfileForms name={name} phone={phone} />
-        <Link className="inline-link icon-line" href="/akun">Kembali ke ringkasan akun</Link>
+        <Link className="inline-link icon-line" href="/akun">Kembali ke profil saya</Link>
       </main>
     </Site>
   );
