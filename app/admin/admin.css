@@ -1,0 +1,94 @@
+.admin-login-main { max-width: 460px; }
+.admin-login .button { width: 100%; }
+.admin-lock {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: var(--mint);
+}
+
+.admin-bar { min-height: 72px; }
+.admin-identity, .admin-session {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.admin-context {
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-name {
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-session .button { min-height: 44px; padding-inline: 14px; }
+
+.admin-workspace {
+  display: grid;
+  grid-template-columns: minmax(155px, 200px) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 44px);
+  align-items: start;
+  padding-block: 36px 52px;
+}
+.admin-content { min-width: 0; }
+.admin-nav { display: grid; gap: 4px; }
+.admin-nav .eyebrow { padding: 0 12px 5px; }
+.admin-nav-group { margin-top: 14px; }
+.admin-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.admin-nav a[aria-current="page"] {
+  color: var(--green-dark);
+  background: var(--mint);
+  font-weight: 700;
+}
+.admin-nav a:hover { color: var(--green-dark); text-decoration: underline; }
+
+.admin-directory {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+}
+.admin-directory > h2 { padding: 20px 22px; font-size: 16px; }
+.admin-directory ul { margin: 0; padding: 0; list-style: none; }
+.admin-directory li { border-top: 1px solid var(--border); }
+.admin-directory a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+}
+.admin-directory li:last-child a { border-radius: 0 0 14px 14px; }
+.admin-directory a:focus-visible { outline-offset: -3px; }
+.admin-directory a:hover { background: var(--input); }
+.admin-directory a:hover h3 { color: var(--green-dark); text-decoration: underline; }
+.admin-directory h3 { margin: 0 0 4px; font-size: 16px; }
+.admin-directory p { color: var(--muted); font-size: 14px; }
+.admin-directory img { flex: none; }
+.admin-empty { justify-items: start; }
+
+@media (max-width: 600px) {
+  .admin-bar { min-height: 64px; }
+  .admin-name { display: none; }
+  .admin-workspace { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 16px 36px; }
+  .admin-nav { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+  .admin-nav .eyebrow { display: none; }
+  .admin-nav a { padding-inline: 9px; }
+  .admin-directory > h2, .admin-directory a { padding-inline: 16px; }
+}

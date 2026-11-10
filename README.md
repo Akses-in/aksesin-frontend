@@ -19,3 +19,36 @@ Untuk masuk, pengguna memasukkan nomor WhatsApp yang sudah terverifikasi di akun
 Jalankan backend Express sesuai [panduan backend](../aksesin-backend/README.md#otp-whatsapp-lewat-fonnte). Frontend menggunakan `BACKEND_URL=http://127.0.0.1:3000` secara default.
 
 - [Fonnte API](https://docs.fonnte.com/api-send-message/)
+
+## Ruang admin
+
+Buka `/admin` lalu masuk menggunakan email dan password akun admin. Akses memerlukan email terverifikasi dan `app_metadata.role` bernilai `admin` pada Supabase Auth. Sesi admin disimpan terpisah dari sesi pengguna.
+
+### Menyiapkan akun admin
+
+Buat atau pilih akun dengan email terverifikasi di **Supabase Dashboard → Authentication → Users**, lalu salin UUID akun itu. Jalankan perintah berikut dari repositori `aksesin-backend` yang sudah dikonfigurasi. Pastikan `SUPABASE_URL` mengarah ke proyek yang benar dan gunakan UUID akun yang memang berhak menjadi admin.
+
+```sh
+ADMIN_USER_ID='UUID_AKUN_ADMIN' node --env-file=.env --input-type=module <<'NODE'
+import { createClient } from '@supabase/supabase-js';
+
+const { ADMIN_USER_ID, SUPABASE_URL, SUPABASE_SECRET_KEY } = process.env;
+if (!ADMIN_USER_ID || !SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+  throw new Error('Konfigurasi pemberian akses admin belum lengkap.');
+}
+const client = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const { data, error } = await client.auth.admin.getUserById(ADMIN_USER_ID);
+if (error || !data.user?.email_confirmed_at) {
+  throw new Error('Gunakan UUID akun dengan email terverifikasi.');
+}
+const result = await client.auth.admin.updateUserById(ADMIN_USER_ID, {
+  app_metadata: { role: 'admin' },
+});
+if (result.error) throw new Error('Peran admin gagal disimpan.');
+console.log('Peran admin tersimpan.');
+NODE
+```
+
+Siapkan password akun melalui Supabase Auth. Menu **Peta**, **Pengguna**, **Komunitas**, dan **Postingan** memiliki route masing-masing. Halaman tersebut menampilkan status integrasi sampai data dan tindakan pengelolaan tersedia.
