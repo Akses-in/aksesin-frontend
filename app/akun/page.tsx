@@ -4,6 +4,12 @@ import { Suspense } from "react";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { preferencesFields, type Preferences } from "@/lib/preferences";
 import {
+  cardStatusMap,
+  formatDateId,
+  type CardNotificationRow,
+  type DigitalCardRow,
+} from "@/lib/digital-card";
+import {
   accountIdentity,
   disabilityLabel,
   hasAccessibilityProfile,
@@ -15,16 +21,33 @@ import { Icon, Site } from "../_components/site";
 
 export const metadata: Metadata = { title: "Profil dan kebutuhan aksesibilitas" };
 
+function missingTable(code?: string) {
+  return code === "PGRST205" || code === "42P01";
+}
+
 async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] }) {
   const { supabase, user } = await verifiedAccount();
-  const { data, error } = await supabase.from("accessibility_preferences")
-    .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>();
+  const [{ data, error }, { data: cardRows, error: cardError }, { data: activityRows, error: activityError }] = await Promise.all([
+    supabase.from("accessibility_preferences")
+      .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>(),
+    supabase.from("digital_cards")
+      .select("id, status, updated_at").eq("user_id", user.id)
+      .order("updated_at", { ascending: false }).limit(1),
+    supabase.from("card_notifications")
+      .select("id, title, message, created_at").eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(4),
+  ]);
   const { keluar, tersimpan } = await params;
   const name = accountName(user);
   const identity = accountIdentity(user);
   const status = disabilityLabel(data?.disability_status ?? null);
   const needs = needLabels(data?.needs ?? []);
   const filled = hasAccessibilityProfile(data);
+  const latestCard = ((cardRows ?? [])[0] ?? null) as Pick<DigitalCardRow, "id" | "status" | "updated_at"> | null;
+  const activities = (activityRows ?? []) as Array<Pick<CardNotificationRow, "id" | "title" | "message" | "created_at">>;
+  const cardLoadFailed = Boolean(cardError && !missingTable(cardError.code));
+  const activityLoadFailed = Boolean(activityError && !missingTable(activityError.code));
+  const cardStatus = latestCard ? cardStatusMap[latestCard.status] : null;
 
   return (
     <Site name={name || "Akun"} variant="summary">
@@ -113,6 +136,49 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
                     ? "Kamu melewati bagian ini saat onboarding. Isi kapan saja kalau berubah pikiran."
                     : "Belum diisi. Bagian ini opsional dan tidak memengaruhi akses ke fitur publik."}
                 </p>
+              )}
+            </div>
+          </section>
+
+          <section className="panel profile-sheet">
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="register-shield-check" size={20} />Kartu aksesibilitas</h2>
+                <Link className="profile-action" href="/kartu-aksesibilitas" aria-label="Buka halaman kartu aksesibilitas">Buka</Link>
+              </div>
+              {cardLoadFailed ? (
+                <p className="error" role="alert">Status kartu belum dapat dimuat. Buka halaman kartu untuk melihat detail.</p>
+              ) : latestCard && cardStatus ? (
+                <>
+                  <dl className="profile-facts">
+                    <div className="profile-fact"><dt>Status</dt><dd>{cardStatus.label}</dd></div>
+                    <div className="profile-fact"><dt>Pembaruan terakhir</dt><dd>{formatDateId(latestCard.updated_at)}</dd></div>
+                  </dl>
+                  <p className="muted">{cardStatus.description}</p>
+                </>
+              ) : (
+                <p className="muted">Belum ada pengajuan kartu. Kartu aksesibilitas membantumu menunjukkan kebutuhan aksesibilitas saat berkunjung.</p>
+              )}
+            </div>
+
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="preferences-circle-check" size={20} />Aktivitas terakhir</h2>
+              </div>
+              {activityLoadFailed ? (
+                <p className="error" role="alert">Aktivitas belum dapat dimuat. Coba muat ulang halaman.</p>
+              ) : activities.length ? (
+                <ol className="activity-list">
+                  {activities.map((item) => (
+                    <li className="activity-item" key={item.id}>
+                      <p className="activity-time">{formatDateId(item.created_at)}</p>
+                      <p className="activity-title">{item.title}</p>
+                      <p className="activity-message">{item.message}</p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="muted">Belum ada aktivitas. Riwayat muncul setelah kamu mengajukan kartu atau statusnya berubah.</p>
               )}
             </div>
           </section>

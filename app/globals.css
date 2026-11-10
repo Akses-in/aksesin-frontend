@@ -272,6 +272,14 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .profile-note { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border-radius: 10px; background: var(--mint); color: var(--green-dark); font-size: 13px; }
 .profile-note img { flex: none; margin-top: 1px; }
 
+.activity-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.activity-item { display: grid; gap: 3px; padding: 14px 0; border-top: 1px solid var(--border); }
+.activity-item:first-child { padding-top: 0; border-top: 0; }
+.activity-item:last-child { padding-bottom: 0; }
+.activity-time { color: var(--muted); font-size: 13px; }
+.activity-title { font-weight: 600; }
+.activity-message { color: var(--muted); font-size: 14px; }
+
 @media (max-width: 600px) {
   .sidebar-privacy { padding: 10px 0 0; }
   .profile-block { padding: 20px 18px; }
