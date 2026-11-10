@@ -21,10 +21,10 @@ export function hasAccessibilityProfile(preferences: Preferences | null) {
   return Boolean(preferences.disability_status || preferences.needs.length || preferences.notes);
 }
 
-export function accessibilityProfileStatus(preferences: Preferences | null) {
-  if (hasAccessibilityProfile(preferences)) return { label: "Sudah diisi", filled: true };
-  if (preferences?.onboarding_skipped) return { label: "Dilewati", filled: false };
-  return { label: "Belum diisi", filled: false };
+export function onboardingStatus(preferences: Preferences | null) {
+  if (!preferences) return "Belum diisi";
+  if (preferences.onboarding_skipped && !hasAccessibilityProfile(preferences)) return "Dilewati";
+  return "Selesai";
 }
 
 export function accountIdentity(user: AccountIdentitySource) {
