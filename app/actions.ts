@@ -158,7 +158,20 @@ export async function savePreferences(form: FormData) {
 
   if (error) return "Preferensi belum tersimpan. Coba lagi.";
   revalidatePath("/akun");
-  redirect("/akun");
+  revalidatePath("/akun/edit");
+  redirect(form.get("context") === "settings" ? "/akun/edit?tersimpan=preferensi" : "/akun?tersimpan=preferensi");
+}
+
+export async function clearPreferences() {
+  const { supabase, user } = await verifiedAccount(true);
+  const { error } = await supabase.from("accessibility_preferences")
+    .update({ disability_status: null, needs: [], notes: "", onboarding_skipped: true })
+    .eq("user_id", user.id);
+
+  if (error) return "Data aksesibilitas belum dapat dihapus. Coba lagi.";
+  revalidatePath("/akun");
+  revalidatePath("/akun/edit");
+  redirect("/akun/edit?hapus=berhasil");
 }
 
 export async function skipPreferences() {
