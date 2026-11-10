@@ -1,4 +1,4 @@
-import { accessibilityOptions, disabilityOptions, type Preferences } from "./preferences";
+import { accessibilityOptions, disabilityOptions, type Preferences } from "./preferences.ts";
 
 export type AccountIdentitySource = {
   email?: string | null;
