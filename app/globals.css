@@ -306,6 +306,8 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .cancel-card-form { display: grid; gap: 10px; justify-items: start; }
 .danger-outline { color: #922c19; border-color: #f3c6bc; }
 .danger-outline:hover:not(:disabled) { border-color: #922c19; color: #731f10; background: #fff1ed; }
+.button.danger { background: #922c19; color: white; }
+.button.danger:hover:not(:disabled) { background: #731f10; }
 .notification-list { display: grid; gap: 12px; }
 .notification-item {
   display: grid;

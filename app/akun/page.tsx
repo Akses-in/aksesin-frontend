@@ -51,10 +51,12 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             </p>
           </div>
 
-          {(tersimpan === "nama" || tersimpan === "nomor") && (
+          {(tersimpan === "nama" || tersimpan === "nomor" || tersimpan === "preferensi") && (
             <p className="notice icon-line" role="status">
               <Icon name="summary-circle-check" size={20} />
-              {tersimpan === "nama" ? "Nama sudah diperbarui." : "Nomor WhatsApp sudah diperbarui."}
+              {tersimpan === "nama" && "Nama sudah diperbarui."}
+              {tersimpan === "nomor" && "Nomor WhatsApp sudah diperbarui."}
+              {tersimpan === "preferensi" && "Kebutuhan aksesibilitas sudah diperbarui."}
             </p>
           )}
           {keluar === "gagal" && <p className="error" role="alert">Sesi belum dapat diakhiri. Coba keluar lagi.</p>}
@@ -75,7 +77,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             <div className="profile-block">
               <div className="profile-block-head">
                 <h2 className="profile-block-title"><Icon name="summary-sliders-horizontal" size={20} />Kebutuhan aksesibilitas</h2>
-                <Link className="profile-action" href="/onboarding"
+                <Link className="profile-action" href="/akun/edit"
                   aria-label={filled ? "Ubah kebutuhan aksesibilitas" : "Isi kebutuhan aksesibilitas"}>
                   {filled ? "Ubah" : "Isi"}
                 </Link>
