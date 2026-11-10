@@ -6,7 +6,10 @@ import { register, signIn } from "../actions";
 import { ActionForm } from "./action-form";
 import { Icon } from "./site";
 
-export function PasswordField({ confirmation = false }: { confirmation?: boolean }) {
+export function PasswordField({ confirmation = false, current = false }: {
+  confirmation?: boolean;
+  current?: boolean;
+}) {
   const [visible, setVisible] = useState(false);
   const field = confirmation ? "confirmation" : "password";
 
@@ -16,9 +19,10 @@ export function PasswordField({ confirmation = false }: { confirmation?: boolean
       <div className="input-shell">
         <Icon name="register-lock-keyhole" size={18} />
         <input id={field} name={field} type={visible ? "text" : "password"}
-          placeholder={confirmation ? "Ulangi password" : "Buat password"}
-          autoComplete="new-password" required minLength={8} maxLength={72}
-          aria-describedby={!confirmation ? "password-hint" : undefined}
+          placeholder={current ? "Masukkan password" : confirmation ? "Ulangi password" : "Buat password"}
+          autoComplete={current ? "current-password" : "new-password"} required
+          minLength={current ? undefined : 8} maxLength={current ? 256 : 72}
+          aria-describedby={!confirmation && !current ? "password-hint" : undefined}
         />
         <button className="password-toggle" type="button" aria-controls={field} aria-pressed={visible}
           aria-label={confirmation ? "Tampilkan konfirmasi password" : "Tampilkan password"}
@@ -26,7 +30,7 @@ export function PasswordField({ confirmation = false }: { confirmation?: boolean
           {visible ? <Icon name="summary-eye" size={15} /> : <Icon name="register-eye-off" size={18} />}
         </button>
       </div>
-      {!confirmation && <p id="password-hint" className="small muted">Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.</p>}
+      {!confirmation && !current && <p id="password-hint" className="small muted">Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.</p>}
     </div>
   );
 }

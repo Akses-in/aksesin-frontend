@@ -12,7 +12,9 @@ export function appOrigin() {
   return url.origin;
 }
 
-export function supabaseClient(cookieMethods: CookieMethodsServer) {
+type SessionScope = "account" | "admin";
+
+export function supabaseClient(cookieMethods: CookieMethodsServer, scope: SessionScope = "account") {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key?.startsWith("sb_publishable_")) {
@@ -21,12 +23,17 @@ export function supabaseClient(cookieMethods: CookieMethodsServer) {
 
   return createServerClient(url, key, {
     cookies: cookieMethods,
-    cookieOptions: { httpOnly: true, secure: appOrigin().startsWith("https:"), sameSite: "lax", path: "/" },
+    cookieOptions: {
+      ...(scope === "admin" ? { name: "aksesin-admin-auth", path: "/admin" } : { path: "/" }),
+      httpOnly: true,
+      secure: appOrigin().startsWith("https:"),
+      sameSite: "lax",
+    },
     global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
   });
 }
 
-export async function serverSupabase(writable = false) {
+export async function serverSupabase(writable = false, scope: SessionScope = "account") {
   await connection();
   const jar = await cookies();
   return supabaseClient({
@@ -36,7 +43,7 @@ export async function serverSupabase(writable = false) {
         for (const { name, value, options } of entries) jar.set(name, value, options);
       }
     },
-  });
+  }, scope);
 }
 
 export async function verifiedAccount(writable = false) {
