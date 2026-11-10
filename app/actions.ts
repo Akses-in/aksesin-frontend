@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { accessibilityOptions, disabilityOptions } from "@/lib/preferences";
+import { validatePreferenceInput } from "@/lib/preferences";
 import { serverSupabase, verifiedAccount } from "@/lib/supabase";
 import { clearPendingChallenge, normalizePhone, pendingChallenge, setPendingChallenge, whatsappRequest } from "@/lib/whatsapp-otp";
 
@@ -141,11 +141,8 @@ export async function savePreferences(form: FormData) {
   const needs = [...new Set(form.getAll("needs").map(String))];
   const notes = String(form.get("notes") ?? "").trim();
 
-  if ((status && !disabilityOptions.some(([value]) => value === status)) ||
-    needs.some((need) => !accessibilityOptions.some(([value]) => value === need)) ||
-    Array.from(notes).length > 300) {
-    return "Periksa pilihan dan batasi deskripsi hingga 300 karakter.";
-  }
+  const invalid = validatePreferenceInput(status, needs, notes);
+  if (invalid) return invalid;
 
   const table = supabase.from("accessibility_preferences");
   const { error } = await table.upsert({

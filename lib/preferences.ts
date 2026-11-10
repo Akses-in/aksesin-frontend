@@ -21,3 +21,16 @@ export type Preferences = {
 };
 
 export const preferencesFields = "disability_status, needs, notes, onboarding_skipped";
+
+export function validatePreferenceInput(status: string, needs: string[], notes: string) {
+  if (status && !disabilityOptions.some(([value]) => value === status)) {
+    return "Pilih status disabilitas yang tersedia.";
+  }
+  if (needs.some((need) => !accessibilityOptions.some(([value]) => value === need))) {
+    return "Pilih kebutuhan aksesibilitas yang tersedia.";
+  }
+  if (Array.from(notes).length > 300) {
+    return "Batasi deskripsi hingga 300 karakter.";
+  }
+  return "";
+}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isUuid } from "@/lib/place";
 import { verifiedAccount } from "@/lib/supabase";
 
 export type PlaceOption = {
@@ -9,8 +10,6 @@ export type PlaceOption = {
   category: string;
   address: string;
 };
-
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function searchPlaces(query: string): Promise<PlaceOption[]> {
   const { supabase } = await verifiedAccount(true);
@@ -28,7 +27,7 @@ export async function searchPlaces(query: string): Promise<PlaceOption[]> {
 }
 
 export async function addSavedPlace(placeId: string) {
-  if (!uuidPattern.test(placeId)) return "Lokasi tidak dikenali. Pilih dari hasil pencarian.";
+  if (!isUuid(placeId)) return "Lokasi tidak dikenali. Pilih dari hasil pencarian.";
   const { supabase, user } = await verifiedAccount(true);
 
   const { error } = await supabase.from("saved_places")
@@ -40,7 +39,7 @@ export async function addSavedPlace(placeId: string) {
 }
 
 export async function removeSavedPlace(id: string) {
-  if (!uuidPattern.test(id)) return "Lokasi tidak dikenali. Muat ulang halaman.";
+  if (!isUuid(id)) return "Lokasi tidak dikenali. Muat ulang halaman.";
   const { supabase, user } = await verifiedAccount(true);
 
   const { error } = await supabase.from("saved_places")
