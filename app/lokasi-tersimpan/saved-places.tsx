@@ -70,7 +70,8 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
 
   return (
     <>
-      <form className="place-search" onSubmit={search}>        <div className="field">
+      <form className="place-search" onSubmit={search}>
+        <div className="field">
           <label htmlFor="place-query">Cari tempat</label>
           <div className="input-shell">
             <input id="place-query" name="query" type="search" value={query} maxLength={60}
@@ -103,7 +104,8 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
                   <button type="button" className="button secondary" disabled={pending} onClick={() => save(place.id)}>
                     Simpan
                   </button>
-                )}              </li>
+                )}
+              </li>
             ))}
           </ul>
         </div>

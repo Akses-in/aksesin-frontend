@@ -34,7 +34,7 @@ export async function addSavedPlace(placeId: string) {
     .upsert({ user_id: user.id, place_id: placeId }, { onConflict: "user_id,place_id", ignoreDuplicates: true });
 
   if (error) return "Lokasi belum dapat disimpan. Coba lagi.";
-  revalidatePath("/akun");
+  revalidatePath("/lokasi-tersimpan");
   return "";
 }
 
@@ -46,6 +46,6 @@ export async function removeSavedPlace(id: string) {
     .delete().eq("id", id).eq("user_id", user.id);
 
   if (error) return "Lokasi belum dapat dihapus. Coba lagi.";
-  revalidatePath("/akun");
+  revalidatePath("/lokasi-tersimpan");
   return "";
 }

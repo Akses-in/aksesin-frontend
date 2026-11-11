@@ -18,8 +18,6 @@ import {
 } from "@/lib/profile";
 import { RetryButton } from "../_components/retry-button";
 import { Icon, Site } from "../_components/site";
-import type { PlaceOption } from "./place-actions";
-import { SavedPlaces, type SavedPlace } from "./saved-places";
 
 export const metadata: Metadata = { title: "Profil dan kebutuhan aksesibilitas" };
 
@@ -50,29 +48,6 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
   const cardLoadFailed = Boolean(cardError && !missingTable(cardError.code));
   const activityLoadFailed = Boolean(activityError && !missingTable(activityError.code));
   const cardStatus = latestCard ? cardStatusMap[latestCard.status] : null;
-
-  const { data: savedRows, error: savedError } = await supabase
-    .from("saved_places").select("id, place_id").eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-  const savedLinks = (savedRows ?? []) as Array<{ id: string; place_id: string }>;
-  let savedLoadFailed = Boolean(savedError && !missingTable(savedError.code));
-  let savedPlaces: SavedPlace[] = [];
-
-  if (!savedLoadFailed && savedLinks.length) {
-    const { data: placeRows, error: placesError } = await supabase.from("places")
-      .select("id, name, category, address").in("id", savedLinks.map((row) => row.place_id));
-    if (placesError && !missingTable(placesError.code)) {
-      savedLoadFailed = true;
-    } else {
-      const byId = new Map<string, PlaceOption>(
-        ((placeRows ?? []) as PlaceOption[]).map((place) => [place.id, place]),
-      );
-      savedPlaces = savedLinks.flatMap((row) => {
-        const place = byId.get(row.place_id);
-        return place ? [{ savedId: row.id, ...place }] : [];
-      });
-    }
-  }
 
   return (
     <Site name={name || "Akun"} variant="summary">
@@ -204,19 +179,6 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
                 </ol>
               ) : (
                 <p className="muted">Belum ada aktivitas. Riwayat muncul setelah kamu mengajukan kartu atau statusnya berubah.</p>
-              )}
-            </div>
-          </section>
-
-          <section className="panel profile-sheet">
-            <div className="profile-block">
-              <div className="profile-block-head">
-                <h2>Lokasi tersimpan</h2>
-              </div>
-              {savedLoadFailed ? (
-                <p className="error" role="alert">Lokasi tersimpan belum dapat dimuat. Coba muat ulang halaman.</p>
-              ) : (
-                <SavedPlaces places={savedPlaces} />
               )}
             </div>
           </section>
