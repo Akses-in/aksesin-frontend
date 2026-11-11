@@ -425,3 +425,124 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
   align-items: center;
   gap: 8px 16px;
 }
+
+/* Riwayat Aktivitas & Summary (PBI-21, PBI-22 / AI-92, AI-93) */
+.activity-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.activity-stat-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+
+.activity-stat-card:hover {
+  background: var(--mint);
+  border-color: var(--green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 124, 83, 0.08);
+}
+
+.activity-stat-card.active {
+  background: var(--mint);
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green);
+}
+
+.activity-stat-val {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.activity-stat-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.activity-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tab-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all 0.15s ease;
+}
+
+.tab-pill:hover {
+  background: var(--mint);
+  color: var(--green-dark);
+}
+
+.tab-pill.current {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+
+.empty-activity-card {
+  padding: 32px 24px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--input);
+  border: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-activity-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--green);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+.empty-activity-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.empty-activity-card .muted {
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.empty-activity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
