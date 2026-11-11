@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
+import { Map } from "@/components/ui/map";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { Site } from "../_components/site";
 
@@ -10,13 +10,9 @@ async function Home() {
   const { user } = await verifiedAccount();
 
   return (
-    <Site name={accountName(user) || "Akun"} variant="summary" activePage="home">
-      <main id="konten" className="narrow-main page-stack" tabIndex={-1}>
-        <h1>Beranda</h1>
-        <div className="panel button-row">
-          <Link className="button primary" href="/lokasi-tersimpan">Lokasi tersimpan</Link>
-          <Link className="button secondary" href="/kartu-aksesibilitas">Kartu aksesibilitas</Link>
-        </div>
+    <Site name={accountName(user) || "Akun"} variant="summary" activePage="home" showFooter={false}>
+      <main id="konten" className="home-map" tabIndex={-1} aria-label="Peta Beranda">
+        <Map center={[106.8224, -6.194]} zoom={16} label="Peta interaktif, tampilan awal Jakarta" />
       </main>
     </Site>
   );

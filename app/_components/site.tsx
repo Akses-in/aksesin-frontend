@@ -7,12 +7,13 @@ export function Icon({ name, size }: { name: string; size: number }) {
 }
 
 export function Site({
-  children, name, variant = "register", activePage,
+  children, name, variant = "register", activePage, showFooter = true,
 }: {
   children: React.ReactNode;
   name?: string;
   variant?: "register" | "preferences" | "summary";
   activePage?: "home" | "saved-places";
+  showFooter?: boolean;
 }) {
   const initials = name?.split(/\s+/).slice(0, 2).map((part) => Array.from(part)[0]).join("");
 
@@ -40,6 +41,7 @@ export function Site({
               <summary><span className="avatar" aria-hidden="true">{initials}</span><span>{name}</span><Icon name="summary-chevron-down" size={16} /></summary>
               <div className="account-menu-panel">
                 <Link href="/akun">Profil saya</Link>
+                <Link href="/kartu-aksesibilitas">Kartu aksesibilitas</Link>
                 <form action={signOut}><button type="submit">Keluar</button></form>
               </div>
             </details>
@@ -47,14 +49,16 @@ export function Site({
         </div>
       </header>
       {children}
-      <footer className="site-width site-footer">
-        <p>© 2026 Aksesin. Akses untuk semua.</p>
-        <nav aria-label="Informasi situs">
-          <Link href="/privasi">Kebijakan Privasi</Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/ketentuan">Ketentuan Penggunaan</Link>
-        </nav>
-      </footer>
+      {showFooter && (
+        <footer className="site-width site-footer">
+          <p>© 2026 Aksesin. Akses untuk semua.</p>
+          <nav aria-label="Informasi situs">
+            <Link href="/privasi">Kebijakan Privasi</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/ketentuan">Ketentuan Penggunaan</Link>
+          </nav>
+        </footer>
+      )}
     </>
   );
 }
