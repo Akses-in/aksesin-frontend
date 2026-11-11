@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { accessibilityOptions, disabilityOptions } from "@/lib/preferences";
+import { validatePreferenceInput } from "@/lib/preferences";
 import { serverSupabase, verifiedAccount } from "@/lib/supabase";
 import { clearPendingChallenge, normalizePhone, pendingChallenge, setPendingChallenge, whatsappRequest } from "@/lib/whatsapp-otp";
 
@@ -141,11 +141,8 @@ export async function savePreferences(form: FormData) {
   const needs = [...new Set(form.getAll("needs").map(String))];
   const notes = String(form.get("notes") ?? "").trim();
 
-  if ((status && !disabilityOptions.some(([value]) => value === status)) ||
-    needs.some((need) => !accessibilityOptions.some(([value]) => value === need)) ||
-    Array.from(notes).length > 300) {
-    return "Periksa pilihan dan batasi deskripsi hingga 300 karakter.";
-  }
+  const invalid = validatePreferenceInput(status, needs, notes);
+  if (invalid) return invalid;
 
   const table = supabase.from("accessibility_preferences");
   const { error } = await table.upsert({
@@ -158,7 +155,20 @@ export async function savePreferences(form: FormData) {
 
   if (error) return "Preferensi belum tersimpan. Coba lagi.";
   revalidatePath("/akun");
-  redirect("/akun");
+  revalidatePath("/akun/edit");
+  redirect(form.get("context") === "settings" ? "/akun/edit?tersimpan=preferensi" : "/akun?tersimpan=preferensi");
+}
+
+export async function clearPreferences() {
+  const { supabase, user } = await verifiedAccount(true);
+  const { error } = await supabase.from("accessibility_preferences")
+    .update({ disability_status: null, needs: [], notes: "", onboarding_skipped: true })
+    .eq("user_id", user.id);
+
+  if (error) return "Data aksesibilitas belum dapat dihapus. Coba lagi.";
+  revalidatePath("/akun");
+  revalidatePath("/akun/edit");
+  redirect("/akun/edit?hapus=berhasil");
 }
 
 export async function skipPreferences() {

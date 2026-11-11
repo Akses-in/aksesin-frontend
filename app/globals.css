@@ -244,7 +244,62 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .otp-resend { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
 .otp-resend .error { flex-basis: 100%; }
 
-.account-edit-link { justify-self: start; }
+.sidebar-privacy { display: flex; align-items: flex-start; gap: 8px; padding: 14px; color: var(--muted); font-size: 13px; }
+.sidebar-privacy img { flex: none; }
+.sidebar-privacy:hover { color: var(--green-dark); text-decoration: underline; }
+
+.profile-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--muted); font-size: 14px; }
+.profile-verified { display: inline-flex; align-items: center; gap: 6px; color: var(--green-dark); }
+.profile-verified img { flex: none; }
+
+.profile-title { font-size: clamp(28px, 4.2vw, 36px); line-height: 1.15; }
+
+.profile-sheet { padding: 0; overflow: clip; border: 1px solid var(--border); }
+.profile-block { display: grid; gap: 20px; padding: clamp(20px, 3.5vw, 30px); }
+.profile-block + .profile-block { border-top: 1px solid var(--border); }
+.profile-block-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.profile-block-title { display: flex; align-items: center; gap: 10px; }
+.profile-block-title img { flex: none; }
+.profile-action { display: inline-flex; align-items: center; min-height: 44px; color: var(--green-dark); font-size: 14px; font-weight: 600; text-decoration: underline; }
+.profile-action:hover { color: var(--green); }
+.profile-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 22px 28px; }
+.profile-fact dt { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+.profile-fact dd { font-weight: 600; overflow-wrap: anywhere; }
+.profile-fact.wide { grid-column: 1 / -1; }
+.profile-facts.stacked { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.profile-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.profile-tag { padding: 2px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input); font-size: 13px; font-weight: 400; }
+.profile-note { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border-radius: 10px; background: var(--mint); color: var(--green-dark); font-size: 13px; }
+.profile-note img { flex: none; margin-top: 1px; }
+
+.activity-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.activity-item { display: grid; gap: 3px; padding: 14px 0; border-top: 1px solid var(--border); }
+.activity-item:first-child { padding-top: 0; border-top: 0; }
+.activity-item:last-child { padding-bottom: 0; }
+.activity-time { color: var(--muted); font-size: 13px; }
+.activity-title { font-weight: 600; }
+.activity-message { color: var(--muted); font-size: 14px; }
+
+.place-search { display: grid; gap: 12px; }
+.place-search .button { justify-self: start; }
+.place-group { display: grid; gap: 8px; }
+.place-group-title { color: var(--muted); font-size: 13px; font-weight: 600; }
+.place-results, .saved-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.place-results { border-top: 1px solid var(--border); }
+.place-results li, .saved-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.place-results li:last-child, .saved-item:last-child { border-bottom: 0; }
+.place-name { font-weight: 600; }
+.place-meta { color: var(--muted); font-size: 13px; }
+.place-saved { align-self: center; }
+.saved-confirm { display: flex; align-items: center; gap: 8px; }
+.text-danger { color: #922c19; }
+
+@media (max-width: 600px) {
+  .sidebar-privacy { padding: 10px 0 0; }
+  .profile-block { padding: 20px 18px; }
+  .profile-facts { gap: 16px; }
+  .profile-block-head { gap: 10px 16px; }
+}
 
 /* Digital Accessibility Card & Status Notifications (PBI-17 & PBI-18) */
 .badge.warning { background: #fef4e6; color: #8a4b08; }
@@ -273,6 +328,8 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .cancel-card-form { display: grid; gap: 10px; justify-items: start; }
 .danger-outline { color: #922c19; border-color: #f3c6bc; }
 .danger-outline:hover:not(:disabled) { border-color: #922c19; color: #731f10; background: #fff1ed; }
+.button.danger { background: #922c19; color: white; }
+.button.danger:hover:not(:disabled) { background: #731f10; }
 .notification-list { display: grid; gap: 12px; }
 .notification-item {
   display: grid;

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { preferencesFields, type Preferences } from "@/lib/preferences";
 import { skipPreferences } from "../actions";
+import { PreferencesForm } from "../_components/preferences-form";
 import { RetryButton } from "../_components/retry-button";
 import { Icon, Site } from "../_components/site";
-import { PreferencesForm } from "./preferences-form";
 
 export const metadata: Metadata = { title: "Preferensi aksesibilitas" };
 
@@ -15,20 +16,20 @@ async function OnboardingContent({ params }: { params: PageProps<"/onboarding">[
   const { data, error } = await supabase.from("accessibility_preferences")
     .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>();
   const { lewati } = await params;
+  if (data) redirect("/akun/edit");
   const firstName = accountName(user).split(/\s+/)[0];
-  const editing = Boolean(data && !data.onboarding_skipped);
 
   return (
     <Site variant="preferences">
       <main id="konten" className="onboarding-main" tabIndex={-1}>
         <div className="onboarding-progress small">
           <p className="icon-line green"><Icon name="preferences-circle-check" size={20} />Akun berhasil dibuat</p>
-          <p className="muted">{editing ? "Preferensi opsional" : "Langkah 2 dari 2 · Opsional"}</p>
+          <p className="muted">Langkah 2 dari 2 · Opsional</p>
         </div>
         <section className="panel page-stack">
           <div className="page-heading">
             <p className="eyebrow">Preferensi aksesibilitas</p>
-            <h1>{editing ? "Ubah preferensi aksesibilitas" : "Pengalaman yang lebih sesuai untukmu"}</h1>
+            <h1>Pengalaman yang lebih sesuai untukmu</h1>
             <p>{firstName ? `Halo, ${firstName}. ` : ""}Bantu kami memahami kebutuhan aksesibilitasmu, hanya jika kamu merasa nyaman.</p>
           </div>
           <div className="notice icon-line">
@@ -43,15 +44,15 @@ async function OnboardingContent({ params }: { params: PageProps<"/onboarding">[
               <p className="error" role="alert">Preferensi belum dapat dimuat. Coba lagi sebelum mengubah isian.</p>
               <div className="button-row">
                 <RetryButton />
-                <Link className="button primary" href="/akun">Ke ringkasan akun</Link>
+                <Link className="button primary" href="/akun">Ke profil saya</Link>
               </div>
             </div>
           ) : (
             <>
               <p className="icon-line small muted"><Icon name="preferences-info" size={15} />Semua isian bersifat opsional</p>
-              {lewati === "gagal" && <p className="error" role="alert">Status belum tersimpan. Coba lewati lagi atau <Link href="/akun">buka ringkasan akun</Link>.</p>}
+              {lewati === "gagal" && <p className="error" role="alert">Status belum tersimpan. Coba lewati lagi atau <Link href="/akun">buka profil saya</Link>.</p>}
               <form id="skip-preferences" action={skipPreferences} />
-              <PreferencesForm preferences={data} />
+              <PreferencesForm preferences={data} context="onboarding" skipFormId="skip-preferences" />
             </>
           )}
         </section>

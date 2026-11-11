@@ -3,17 +3,28 @@
 import { useState } from "react";
 import { accessibilityOptions, disabilityOptions, type Preferences } from "@/lib/preferences";
 import { savePreferences } from "../actions";
-import { ActionForm } from "../_components/action-form";
-import { Icon } from "../_components/site";
+import { ActionForm } from "./action-form";
+import { Icon } from "./site";
 
-export function PreferencesForm({ preferences }: { preferences: Preferences | null }) {
+export function PreferencesForm({
+  preferences,
+  context = "settings",
+  skipFormId,
+}: {
+  preferences: Preferences | null;
+  context?: "onboarding" | "settings";
+  skipFormId?: string;
+}) {
   const [status, setStatus] = useState(preferences?.disability_status ?? "");
   const [notes, setNotes] = useState(preferences?.notes ?? "");
+  const onboarding = context === "onboarding";
 
   return (
     <ActionForm action={savePreferences} className="preferences-form">
       {(pending, error) => (
         <>
+          <input type="hidden" name="context" value={context} />
+
           <fieldset className="choice-group" disabled={pending} aria-describedby="disability-hint">
             <legend>Status disabilitas (opsional)</legend>
             <p id="disability-hint" className="small muted">Pilih satu, atau biarkan kosong. Tidak ada jawaban yang wajib.</p>
@@ -53,12 +64,21 @@ export function PreferencesForm({ preferences }: { preferences: Preferences | nu
           </div>
 
           <div className="preferences-actions">
-            <p className="small muted">Dengan menyimpan, kamu memilih menggunakan jawaban di atas untuk personalisasi. Jika dilewati, akun tetap bisa digunakan tanpa menyimpan isian ini.</p>
+            <p className="small muted">
+              {onboarding
+                ? "Dengan menyimpan, kamu memilih menggunakan jawaban di atas untuk personalisasi. Jika dilewati, akun tetap bisa digunakan tanpa menyimpan isian ini."
+                : "Mengosongkan semua isian lalu menyimpan juga menghapus data lamamu."}
+            </p>
             {error && <p className="error" role="alert">{error}</p>}
             <div className="button-row">
-              <button type="submit" className="button secondary" form="skip-preferences" disabled={pending}>Lewati untuk sekarang</button>
+              {onboarding && skipFormId && (
+                <button type="submit" className="button secondary" form={skipFormId} disabled={pending}>
+                  Lewati untuk sekarang
+                </button>
+              )}
               <button type="submit" className="button primary" disabled={pending}>
-                {pending ? "Menyimpan…" : "Simpan preferensi"} <Icon name="preferences-arrow-right" size={17} />
+                {pending ? "Menyimpan…" : onboarding ? "Simpan preferensi" : "Simpan kebutuhan aksesibilitas"}
+                {onboarding && <Icon name="preferences-arrow-right" size={17} />}
               </button>
             </div>
           </div>

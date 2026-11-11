@@ -2,38 +2,77 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { accountName, verifiedAccount } from "@/lib/supabase";
-import { accessibilityOptions, disabilityOptions, preferencesFields, type Preferences } from "@/lib/preferences";
+import { preferencesFields, type Preferences } from "@/lib/preferences";
+import {
+  cardStatusMap,
+  formatDateId,
+  type CardNotificationRow,
+  type DigitalCardRow,
+} from "@/lib/digital-card";
+import {
+  accountIdentity,
+  disabilityLabel,
+  hasAccessibilityProfile,
+  needLabels,
+  onboardingStatus,
+} from "@/lib/profile";
 import { RetryButton } from "../_components/retry-button";
 import { Icon, Site } from "../_components/site";
+import type { PlaceOption } from "./place-actions";
+import { SavedPlaces, type SavedPlace } from "./saved-places";
 
-export const metadata: Metadata = { title: "Ringkasan akun & preferensi" };
+export const metadata: Metadata = { title: "Profil dan kebutuhan aksesibilitas" };
 
-function StatusCard({ category, title, status, active, children }: {
-  category: string; title: string; status: string; active?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <section className="status-card">
-      <div className="status-heading">
-        <div><p className="small muted">{category}</p><h2>{title}</h2></div>
-        <span className={active ? "badge active" : "badge"}>{status}</span>
-      </div>
-      {children}
-    </section>
-  );
+function missingTable(code?: string) {
+  return code === "PGRST205" || code === "42P01";
 }
 
-async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] }) {
+async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] }) {
   const { supabase, user } = await verifiedAccount();
-  const { data, error } = await supabase.from("accessibility_preferences")
-    .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>();
+  const [{ data, error }, { data: cardRows, error: cardError }, { data: activityRows, error: activityError }] = await Promise.all([
+    supabase.from("accessibility_preferences")
+      .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>(),
+    supabase.from("digital_cards")
+      .select("id, status, updated_at").eq("user_id", user.id)
+      .order("updated_at", { ascending: false }).limit(1),
+    supabase.from("card_notifications")
+      .select("id, title, message, created_at").eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(4),
+  ]);
   const { keluar, tersimpan } = await params;
   const name = accountName(user);
-  const hasVerifiedPhone = Boolean(user.phone && user.phone_confirmed_at);
-  const firstName = name.split(/\s+/)[0];
-  const status = disabilityOptions.find(([value]) => value === data?.disability_status);
-  const needs = accessibilityOptions.filter(([value]) => data?.needs.includes(value));
-  const hasPreferences = Boolean(needs.length || data?.notes);
-  const empty = !status && !hasPreferences;
+  const identity = accountIdentity(user);
+  const status = disabilityLabel(data?.disability_status ?? null);
+  const needs = needLabels(data?.needs ?? []);
+  const filled = hasAccessibilityProfile(data);
+  const latestCard = ((cardRows ?? [])[0] ?? null) as Pick<DigitalCardRow, "id" | "status" | "updated_at"> | null;
+  const activities = (activityRows ?? []) as Array<Pick<CardNotificationRow, "id" | "title" | "message" | "created_at">>;
+  const cardLoadFailed = Boolean(cardError && !missingTable(cardError.code));
+  const activityLoadFailed = Boolean(activityError && !missingTable(activityError.code));
+  const cardStatus = latestCard ? cardStatusMap[latestCard.status] : null;
+
+  const { data: savedRows, error: savedError } = await supabase
+    .from("saved_places").select("id, place_id").eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  const savedLinks = (savedRows ?? []) as Array<{ id: string; place_id: string }>;
+  let savedLoadFailed = Boolean(savedError && !missingTable(savedError.code));
+  let savedPlaces: SavedPlace[] = [];
+
+  if (!savedLoadFailed && savedLinks.length) {
+    const { data: placeRows, error: placesError } = await supabase.from("places")
+      .select("id, name, category, address").in("id", savedLinks.map((row) => row.place_id));
+    if (placesError && !missingTable(placesError.code)) {
+      savedLoadFailed = true;
+    } else {
+      const byId = new Map<string, PlaceOption>(
+        ((placeRows ?? []) as PlaceOption[]).map((place) => [place.id, place]),
+      );
+      savedPlaces = savedLinks.flatMap((row) => {
+        const place = byId.get(row.place_id);
+        return place ? [{ savedId: row.id, ...place }] : [];
+      });
+    }
+  }
 
   return (
     <Site name={name || "Akun"} variant="summary">
@@ -41,92 +80,146 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
         <aside className="account-sidebar">
           <p className="eyebrow muted">Pengaturan</p>
           <nav aria-label="Pengaturan akun">
-            <Link className="icon-line current" aria-current="page" href="/akun"><Icon name="summary-user-round" size={20} />Akun & preferensi</Link>
+            <Link className="icon-line current" aria-current="page" href="/akun"><Icon name="summary-user-round" size={20} />Profil saya</Link>
             <Link className="icon-line" href="/kartu-aksesibilitas"><Icon name="register-shield-check" size={20} />Kartu aksesibilitas</Link>
             <Link className="icon-line" href="/bantuan"><Icon name="summary-circle-help" size={20} />Bantuan</Link>
           </nav>
-          <div className="sidebar-note small muted">
+          <Link className="sidebar-privacy" href="/privasi">
             <Icon name="summary-lock-keyhole" size={18} />
-            <p>Kamu yang menentukan data apa yang ingin dibagikan.</p>
-          </div>
+            Kebijakan privasi
+          </Link>
         </aside>
+
         <div className="page-stack">
           <div className="page-heading">
-            <div className="status-heading">
-              <p className="eyebrow">Akun & preferensi</p>
-              <p className="icon-line small muted"><Icon name="summary-eye" size={15} />Hanya lihat</p>
-            </div>
-            <h1>Ringkasan akun &amp; preferensi</h1>
-            <p>{firstName ? `Halo, ${firstName}. ` : ""}Ini ringkasan akun, status onboarding, dan pilihan aksesibilitasmu.</p>
+            <h1 className="profile-title">{name || "Profil saya"}</h1>
+            <p className="profile-meta">
+              <span>{identity.label} {identity.value}</span>
+              <span className="profile-verified"><Icon name="summary-circle-check" size={16} />Terverifikasi</span>
+            </p>
           </div>
-          {(tersimpan === "nama" || tersimpan === "nomor") && (
+
+          {(tersimpan === "nama" || tersimpan === "nomor" || tersimpan === "preferensi") && (
             <p className="notice icon-line" role="status">
               <Icon name="summary-circle-check" size={20} />
-              {tersimpan === "nama" ? "Nama sudah diperbarui." : "Nomor WhatsApp sudah diperbarui."}
+              {tersimpan === "nama" && "Nama sudah diperbarui."}
+              {tersimpan === "nomor" && "Nomor WhatsApp sudah diperbarui."}
+              {tersimpan === "preferensi" && "Kebutuhan aksesibilitas sudah diperbarui."}
             </p>
           )}
           {keluar === "gagal" && <p className="error" role="alert">Sesi belum dapat diakhiri. Coba keluar lagi.</p>}
-          <div className="notice icon-line">
-            <Icon name="summary-circle-check" size={20} />
-            <div>
-              <h2>{empty ? "Akunmu siap digunakan." : `Registrasi berhasil.${firstName ? ` Selamat datang, ${firstName}!` : ""}`}</h2>
-              <p>Langkah wajib sudah selesai. Data disabilitas dan preferensi bersifat opsional.</p>
+
+          <section className="panel profile-sheet">
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="summary-user-round" size={20} />Data akun</h2>
+                <Link className="profile-action" href="/akun/edit" aria-label="Ubah data akun">Ubah</Link>
+              </div>
+              <dl className="profile-facts">
+                <div className="profile-fact"><dt>Nama lengkap</dt><dd>{name || "Belum tersedia"}</dd></div>
+                <div className="profile-fact"><dt>{identity.label}</dt><dd>{identity.value || "Belum tersedia"}</dd></div>
+                <div className="profile-fact"><dt>Status onboarding</dt><dd>{error ? "Belum dapat dimuat" : onboardingStatus(data)}</dd></div>
+              </dl>
             </div>
-          </div>
 
-          {!empty && (
-            <div className="section-intro">
-              <h2>Ringkasan akun &amp; preferensi</h2>
-              <p className="muted">Ringkasan ini menampilkan data akun, status onboarding, dan pilihan aksesibilitasmu.</p>
-            </div>
-          )}
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="summary-sliders-horizontal" size={20} />Kebutuhan aksesibilitas</h2>
+                <Link className="profile-action" href="/akun/edit"
+                  aria-label={filled ? "Ubah kebutuhan aksesibilitas" : "Isi kebutuhan aksesibilitas"}>
+                  {filled ? "Ubah" : "Isi"}
+                </Link>
+              </div>
 
-          <StatusCard category="WAJIB · BUAT AKUN" title="Data akun & status onboarding" status="Selesai" active>
-            <dl className="account-details">
-              <div><dt>Nama lengkap</dt><dd>{name || "Belum tersedia"}</dd></div>
-              <div><dt>{hasVerifiedPhone ? "Nomor WhatsApp" : "Email"}</dt><dd>{hasVerifiedPhone ? `+${user.phone?.replace(/^\+/, "")}` : user.email}</dd></div>
-            </dl>
-            <p className="status-footnote small muted">Registrasi selesai. {hasVerifiedPhone ? "Nomor WhatsApp" : "Email"} sudah terverifikasi.</p>
-            <Link className="button secondary account-edit-link" href="/akun/edit">Edit data akun</Link>
-          </StatusCard>
-
-          {error ? (
-            <section className="status-card">
-              <h2>Status belum dapat dimuat</h2>
-              <p className="muted" role="alert">Data opsional belum dapat dibaca. Akunmu tetap dapat digunakan.</p>
-              <RetryButton />
-            </section>
-          ) : (
-            <>
-              {empty && (
-                <div className="section-intro">
-                  <h2 className="icon-line"><Icon name="skipped-leaf" size={20} />Data opsional</h2>
-                  <p className="muted">Kamu belum memberikan informasi berikut. Ini opsional dan tidak ada kewajiban membukanya.</p>
+              {error ? (
+                <div className="page-stack">
+                  <p className="error" role="alert">Data opsional belum dapat dimuat. Akunmu tetap bisa dipakai.</p>
+                  <RetryButton />
                 </div>
-              )}
-              <StatusCard category="OPSIONAL · PRIBADI" title="Data disabilitas" status={status ? "Tersimpan" : "Belum diberikan"} active={Boolean(status)}>
-                {status ? (
-                  <>
-                    <dl><dt>Status disabilitas</dt><dd>{status[1]}</dd></dl>
-                    <p className="small muted">Hanya terlihat olehmu di halaman akun ini.</p>
-                  </>
-                ) : <p className="muted">Status disabilitas belum diberikan. Kamu tetap bisa menggunakan akun tanpa mengungkapkannya.</p>}
-              </StatusCard>
-              <StatusCard category="OPSIONAL" title="Preferensi aksesibilitas" status={hasPreferences ? "Tersimpan" : data?.onboarding_skipped ? "Dilewati" : "Belum diberikan"} active={hasPreferences}>
-                {hasPreferences ? (
-                  <dl className="preference-details">
-                    {!!needs.length && <div><dt>Kebutuhan aksesibilitas</dt><dd className="badges">{needs.map(([value, label]) => <span className="badge active" key={value}>{label}</span>)}</dd></div>}
-                    {data?.notes && <div><dt>Deskripsi kebutuhan</dt><dd className="saved-notes">{data.notes}</dd></div>}
+              ) : filled ? (
+                <>
+                  <dl className="profile-facts stacked">
+                    {status && <div className="profile-fact"><dt>Status disabilitas</dt><dd>{status}</dd></div>}
+                    {!!needs.length && (
+                      <div className="profile-fact">
+                        <dt>Kebutuhan</dt>
+                        <dd>
+                          <ul className="profile-tags">
+                            {needs.map((label) => <li className="profile-tag" key={label}>{label}</li>)}
+                          </ul>
+                        </dd>
+                      </div>
+                    )}
+                    {data?.notes && <div className="profile-fact wide"><dt>Catatan</dt><dd className="saved-notes">{data.notes}</dd></div>}
                   </dl>
-                ) : <p className="muted">Kebutuhan aksesibilitas dan deskripsi belum diberikan. Kamu bisa menyesuaikannya kapan saja.</p>}
-              </StatusCard>
-              <section className="notice next-step">
-                <h2 className="icon-line"><Icon name="summary-sliders-horizontal" size={18} />{empty ? "Kamu boleh membiarkannya seperti ini" : "Ingin menyesuaikan akun & preferensimu?"}</h2>
-                <p>Hanya bagikan yang membuatmu nyaman. Akunmu tetap dapat digunakan tanpa data ini.</p>
-                <Link className="inline-link icon-line" href="/onboarding">{empty ? "Buka preferensi opsional" : "Ubah preferensi"}<Icon name="summary-arrow-up-right" size={17} /></Link>
-              </section>
-            </>
-          )}
+                  <p className="profile-note"><Icon name="summary-lock-keyhole" size={16} />
+                    Hanya kamu yang bisa melihat isian ini. Data tidak tampil di profil publik.</p>
+                </>
+              ) : (
+                <p className="muted">
+                  {data?.onboarding_skipped
+                    ? "Kamu melewati bagian ini saat onboarding. Isi kapan saja kalau berubah pikiran."
+                    : "Belum diisi. Bagian ini opsional dan tidak memengaruhi akses ke fitur publik."}
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="panel profile-sheet">
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="register-shield-check" size={20} />Kartu aksesibilitas</h2>
+                <Link className="profile-action" href="/kartu-aksesibilitas" aria-label="Buka halaman kartu aksesibilitas">Buka</Link>
+              </div>
+              {cardLoadFailed ? (
+                <p className="error" role="alert">Status kartu belum dapat dimuat. Buka halaman kartu untuk melihat detail.</p>
+              ) : latestCard && cardStatus ? (
+                <>
+                  <dl className="profile-facts">
+                    <div className="profile-fact"><dt>Status</dt><dd>{cardStatus.label}</dd></div>
+                    <div className="profile-fact"><dt>Pembaruan terakhir</dt><dd>{formatDateId(latestCard.updated_at)}</dd></div>
+                  </dl>
+                  <p className="muted">{cardStatus.description}</p>
+                </>
+              ) : (
+                <p className="muted">Belum ada pengajuan kartu. Kartu aksesibilitas membantumu menunjukkan kebutuhan aksesibilitas saat berkunjung.</p>
+              )}
+            </div>
+
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2 className="profile-block-title"><Icon name="preferences-circle-check" size={20} />Aktivitas terakhir</h2>
+              </div>
+              {activityLoadFailed ? (
+                <p className="error" role="alert">Aktivitas belum dapat dimuat. Coba muat ulang halaman.</p>
+              ) : activities.length ? (
+                <ol className="activity-list">
+                  {activities.map((item) => (
+                    <li className="activity-item" key={item.id}>
+                      <p className="activity-time">{formatDateId(item.created_at)}</p>
+                      <p className="activity-title">{item.title}</p>
+                      <p className="activity-message">{item.message}</p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="muted">Belum ada aktivitas. Riwayat muncul setelah kamu mengajukan kartu atau statusnya berubah.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="panel profile-sheet">
+            <div className="profile-block">
+              <div className="profile-block-head">
+                <h2>Lokasi tersimpan</h2>
+              </div>
+              {savedLoadFailed ? (
+                <p className="error" role="alert">Lokasi tersimpan belum dapat dimuat. Coba muat ulang halaman.</p>
+              ) : (
+                <SavedPlaces places={savedPlaces} />
+              )}
+            </div>
+          </section>
         </div>
       </main>
     </Site>
@@ -134,5 +227,5 @@ async function Summary({ params }: { params: PageProps<"/akun">["searchParams"] 
 }
 
 export default function AccountPage({ searchParams }: PageProps<"/akun">) {
-  return <Suspense fallback={<p className="loading" role="status">Memuat ringkasan akun…</p>}><Summary params={searchParams} /></Suspense>;
+  return <Suspense fallback={<p className="loading" role="status">Memuat profil…</p>}><Profile params={searchParams} /></Suspense>;
 }
