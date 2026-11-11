@@ -139,7 +139,9 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
             ))}
           </ul>
         ) : (
-          <p className="muted">Belum ada lokasi tersimpan. Cari tempat di atas untuk menambahkannya.</p>
+          <div className="empty-activity-card" role="status">
+            <p className="empty-activity-title">Belum ada lokasi yang disimpan.</p>
+          </div>
         )}
       </div>
     </>
