@@ -12,7 +12,7 @@ export function Site({
   children: React.ReactNode;
   name?: string;
   variant?: "register" | "preferences" | "summary";
-  activePage?: "home" | "saved-places";
+  activePage?: "home" | "saved-places" | "activities";
   showFooter?: boolean;
 }) {
   const initials = name?.split(/\s+/).slice(0, 2).map((part) => Array.from(part)[0]).join("");
@@ -30,6 +30,7 @@ export function Site({
             {name && (
               <>
                 <Link href="/beranda" aria-current={activePage === "home" ? "page" : undefined}>Beranda</Link>
+                <Link href="/riwayat-aktivitas" aria-current={activePage === "activities" ? "page" : undefined}>Riwayat aktivitas</Link>
                 <Link href="/lokasi-tersimpan" aria-current={activePage === "saved-places" ? "page" : undefined}>Lokasi tersimpan</Link>
               </>
             )}
@@ -41,6 +42,7 @@ export function Site({
               <summary><span className="avatar" aria-hidden="true">{initials}</span><span>{name}</span><Icon name="summary-chevron-down" size={16} /></summary>
               <div className="account-menu-panel">
                 <Link href="/akun">Profil saya</Link>
+                <Link href="/riwayat-aktivitas">Riwayat aktivitas</Link>
                 <Link href="/kartu-aksesibilitas">Kartu aksesibilitas</Link>
                 <form action={signOut}><button type="submit">Keluar</button></form>
               </div>

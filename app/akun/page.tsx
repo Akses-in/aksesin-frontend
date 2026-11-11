@@ -27,9 +27,26 @@ function missingTable(code?: string) {
   return code === "PGRST205" || code === "42P01";
 }
 
+type ActivityEntry = {
+  id: string;
+  type: "comment" | "contribution" | "notification";
+  badge?: string;
+  badgeClass?: string;
+  title: string;
+  subtitle?: string;
+  message: string;
+  created_at: string;
+};
+
 async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] }) {
   const { supabase, user } = await verifiedAccount();
-  const [{ data, error }, { data: cardRows, error: cardError }, { data: activityRows, error: activityError }] = await Promise.all([
+  const [
+    { data, error },
+    { data: cardRows, error: cardError },
+    { data: activityRows, error: activityError },
+    { data: commentRows, error: commentError },
+    { data: contributionRows, error: contributionError },
+  ] = await Promise.all([
     supabase.from("accessibility_preferences")
       .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>(),
     supabase.from("digital_cards")
@@ -38,6 +55,12 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
     supabase.from("card_notifications")
       .select("id, title, message, created_at").eq("user_id", user.id)
       .order("created_at", { ascending: false }).limit(4),
+    supabase.from("community_comments")
+      .select("id, post_id, content, created_at").eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(10),
+    supabase.from("accessibility_contributions")
+      .select("id, place_id, notes, status, submitted_at").eq("user_id", user.id)
+      .order("submitted_at", { ascending: false }).limit(10),
   ]);
   const { keluar, tersimpan } = await params;
   const name = accountName(user);
@@ -46,9 +69,79 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
   const needs = needLabels(data?.needs ?? []);
   const filled = hasAccessibilityProfile(data);
   const latestCard = ((cardRows ?? [])[0] ?? null) as Pick<DigitalCardRow, "id" | "status" | "updated_at"> | null;
-  const activities = (activityRows ?? []) as Array<Pick<CardNotificationRow, "id" | "title" | "message" | "created_at">>;
+
+  let commentActivities: ActivityEntry[] = [];
+  const rawComments = (commentRows ?? []) as Array<{ id: string; post_id: string; content: string; created_at: string }>;
+  if (rawComments.length) {
+    const postIds = Array.from(new Set(rawComments.map((c) => c.post_id).filter(Boolean)));
+    const { data: postRows } = await supabase.from("community_posts").select("id, title").in("id", postIds);
+    const postMap = new Map<string, string>(((postRows ?? []) as Array<{ id: string; title: string }>).map((p) => [p.id, p.title]));
+    commentActivities = rawComments.map((c) => ({
+      id: c.id,
+      type: "comment",
+      badge: "Komentar",
+      title: `Komentar di "${postMap.get(c.post_id) ?? "Postingan Komunitas"}"`,
+      message: c.content,
+      created_at: c.created_at,
+    }));
+  }
+
+  let contributionActivities: ActivityEntry[] = [];
+  const rawContributions = (contributionRows ?? []) as Array<{
+    id: string;
+    place_id: string;
+    notes: string;
+    status: string;
+    submitted_at: string;
+  }>;
+  if (rawContributions.length) {
+    const placeIds = Array.from(new Set(rawContributions.map((c) => c.place_id).filter(Boolean)));
+    const { data: placeRows } = await supabase.from("places").select("id, name, address, category").in("id", placeIds);
+    const placeMap = new Map<string, { name: string; address?: string; category?: string }>(
+      ((placeRows ?? []) as Array<{ id: string; name: string; address?: string; category?: string }>).map((p) => [
+        p.id,
+        { name: p.name, address: p.address, category: p.category },
+      ]),
+    );
+    contributionActivities = rawContributions.map((c) => {
+      const isApproved = c.status === "approved";
+      const isRejected = c.status === "rejected";
+      const place = placeMap.get(c.place_id);
+      return {
+        id: c.id,
+        type: "contribution",
+        badge: isApproved ? "Disetujui" : isRejected ? "Belum disetujui" : "Menunggu peninjauan",
+        badgeClass: isApproved ? "badge active" : isRejected ? "badge danger" : "badge warning",
+        title: `Review fasilitas di ${place?.name ?? "Lokasi Publik"}`,
+        subtitle: place?.address ? `${place.category ?? "Fasilitas"} · ${place.address}` : undefined,
+        message: c.notes,
+        created_at: c.submitted_at,
+      };
+    });
+  }
+
+  const notificationActivities: ActivityEntry[] = (
+    (activityRows ?? []) as Array<Pick<CardNotificationRow, "id" | "title" | "message" | "created_at">>
+  ).map((n) => ({
+    id: n.id,
+    type: "notification",
+    title: n.title,
+    message: n.message,
+    created_at: n.created_at,
+  }));
+
+  const activities: ActivityEntry[] = [
+    ...commentActivities,
+    ...contributionActivities,
+    ...notificationActivities,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
   const cardLoadFailed = Boolean(cardError && !missingTable(cardError.code));
-  const activityLoadFailed = Boolean(activityError && !missingTable(activityError.code));
+  const activityLoadFailed = Boolean(
+    (activityError && !missingTable(activityError.code)) ||
+    (commentError && !missingTable(commentError.code)) ||
+    (contributionError && !missingTable(contributionError.code))
+  );
   const cardStatus = latestCard ? cardStatusMap[latestCard.status] : null;
 
   const { data: savedRows, error: savedError } = await supabase
@@ -81,6 +174,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
           <p className="eyebrow muted">Pengaturan</p>
           <nav aria-label="Pengaturan akun">
             <Link className="icon-line current" aria-current="page" href="/akun"><Icon name="summary-user-round" size={20} />Profil saya</Link>
+            <Link className="icon-line" href="/riwayat-aktivitas"><Icon name="preferences-circle-check" size={20} />Riwayat aktivitas</Link>
             <Link className="icon-line" href="/kartu-aksesibilitas"><Icon name="register-shield-check" size={20} />Kartu aksesibilitas</Link>
             <Link className="icon-line" href="/bantuan"><Icon name="summary-circle-help" size={20} />Bantuan</Link>
           </nav>
@@ -165,6 +259,26 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             </div>
           </section>
 
+          {/* Rangkuman Aktivitas & Lokasi Tersimpan (Subtask 2) */}
+          <section className="activity-summary-grid" aria-label="Rangkuman aktivitas">
+            <div className="activity-stat-card">
+              <span className="activity-stat-val">{activities.length}</span>
+              <span className="activity-stat-label">Aktivitas Saya</span>
+            </div>
+            <div className="activity-stat-card">
+              <span className="activity-stat-val">{commentActivities.length}</span>
+              <span className="activity-stat-label">Komentar Postingan</span>
+            </div>
+            <div className="activity-stat-card">
+              <span className="activity-stat-val">{contributionActivities.length}</span>
+              <span className="activity-stat-label">Review Lokasi</span>
+            </div>
+            <div className="activity-stat-card">
+              <span className="activity-stat-val">{savedPlaces.length}</span>
+              <span className="activity-stat-label">Lokasi Tersimpan</span>
+            </div>
+          </section>
+
           <section className="panel profile-sheet">
             <div className="profile-block">
               <div className="profile-block-head">
@@ -189,21 +303,28 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             <div className="profile-block">
               <div className="profile-block-head">
                 <h2 className="profile-block-title"><Icon name="preferences-circle-check" size={20} />Aktivitas terakhir</h2>
+                <Link className="profile-action" href="/riwayat-aktivitas" aria-label="Lihat semua riwayat aktivitas">Lihat semua</Link>
               </div>
               {activityLoadFailed ? (
                 <p className="error" role="alert">Aktivitas belum dapat dimuat. Coba muat ulang halaman.</p>
               ) : activities.length ? (
-                <ol className="activity-list">
+                <ol className="activity-list" aria-label="Riwayat aktivitas saya">
                   {activities.map((item) => (
                     <li className="activity-item" key={item.id}>
-                      <p className="activity-time">{formatDateId(item.created_at)}</p>
+                      <div className="status-heading">
+                        <p className="activity-time">{formatDateId(item.created_at)}</p>
+                        {item.badge && (
+                          <span className={item.badgeClass ?? "badge"}>{item.badge}</span>
+                        )}
+                      </div>
                       <p className="activity-title">{item.title}</p>
+                      {item.subtitle && <p className="place-meta">{item.subtitle}</p>}
                       <p className="activity-message">{item.message}</p>
                     </li>
                   ))}
                 </ol>
               ) : (
-                <p className="muted">Belum ada aktivitas. Riwayat muncul setelah kamu mengajukan kartu atau statusnya berubah.</p>
+                <p className="muted">Belum ada riwayat aktivitas. Komentar pada postingan komunitas dan kontribusi review lokasi yang kamu kirim akan muncul di sini.</p>
               )}
             </div>
           </section>
@@ -212,6 +333,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             <div className="profile-block">
               <div className="profile-block-head">
                 <h2>Lokasi tersimpan</h2>
+                <Link className="profile-action" href="/lokasi-tersimpan" aria-label="Buka halaman lokasi tersimpan">Buka peta</Link>
               </div>
               {savedLoadFailed ? (
                 <p className="error" role="alert">Lokasi tersimpan belum dapat dimuat. Coba muat ulang halaman.</p>
