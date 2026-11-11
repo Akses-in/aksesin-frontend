@@ -117,6 +117,68 @@ fieldset { min-width: 0; }
 .onboarding-main, .narrow-main { width: min(calc(100% - 2 * clamp(16px, 5vw, 48px)), 840px); margin: 40px auto; }
 .narrow-main { max-width: 560px; }
 .narrow-main .button { justify-self: start; }
+.home-map {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--input);
+}
+.home-map > .mapcn-canvas { position: absolute; inset: 0; }
+.mapcn-canvas .maplibregl-canvas:focus-visible { outline-offset: -4px; }
+.mapcn-message {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--input);
+  text-align: center;
+}
+.mapcn-controls {
+  position: absolute;
+  bottom: 40px;
+  right: 12px;
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+.mapcn-controls button { display: grid; place-items: center; width: 44px; height: 44px; background: transparent; }
+.mapcn-controls button + button { border-top: 1px solid var(--border); }
+.mapcn-controls button:hover { background: var(--mint); }
+.mapcn-controls button[aria-disabled="true"] { background: var(--mint); color: var(--green-dark); cursor: wait; }
+.mapcn-controls button:focus-visible { outline-offset: -3px; }
+.mapcn-user-location {
+  width: 18px;
+  height: 18px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #1767d2;
+  box-shadow: 0 0 0 1px #1767d2;
+  pointer-events: none;
+}
+.mapcn-location-feedback {
+  position: absolute;
+  right: 68px;
+  bottom: 40px;
+  max-width: min(300px, calc(100% - 80px));
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.mapcn-location-feedback:not(.error) { background: white; border: 1px solid var(--border); }
+.mapcn-location-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .onboarding-progress { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 22px; }
 .onboarding-progress .icon-line { align-items: center; font-size: 14px; }
 .panel { background: white; border-radius: 20px; padding: clamp(20px, 4vw, 36px); box-shadow: var(--shadow); }
