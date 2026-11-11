@@ -7,11 +7,12 @@ export function Icon({ name, size }: { name: string; size: number }) {
 }
 
 export function Site({
-  children, name, variant = "register",
+  children, name, variant = "register", activePage,
 }: {
   children: React.ReactNode;
   name?: string;
   variant?: "register" | "preferences" | "summary";
+  activePage?: "home" | "saved-places";
 }) {
   const initials = name?.split(/\s+/).slice(0, 2).map((part) => Array.from(part)[0]).join("");
 
@@ -19,20 +20,30 @@ export function Site({
     <>
       <a className="skip-link" href="#konten">Lewati ke konten</a>
       <header className="site-header">
-        <div className="site-width site-bar">
-          <Link className="brand" href={name ? "/akun" : "/"}>
+        <div className={`site-width site-bar${name ? " signed-in" : ""}`}>
+          <Link className="brand" href={name ? "/beranda" : "/"}>
             <Image src={`/figma/${variant}-aksesin-mark.svg`} width={27} height={31} alt="" unoptimized />
             Aksesin
           </Link>
           <nav className="site-links" aria-label="Navigasi utama">
+            {name && (
+              <>
+                <Link href="/beranda" aria-current={activePage === "home" ? "page" : undefined}>Beranda</Link>
+                <Link href="/lokasi-tersimpan" aria-current={activePage === "saved-places" ? "page" : undefined}>Lokasi tersimpan</Link>
+              </>
+            )}
             <Link href="/bantuan">Pusat bantuan</Link>
-            {name ? (
-              <details className="account-menu">
-                <summary><span className="avatar" aria-hidden="true">{initials}</span><span>{name}</span><Icon name="summary-chevron-down" size={16} /></summary>
-                <form action={signOut}><button type="submit">Keluar</button></form>
-              </details>
-            ) : <Link className="green" href="/privasi">Privasi</Link>}
+            {!name && <Link className="green" href="/privasi">Privasi</Link>}
           </nav>
+          {name && (
+            <details className="account-menu">
+              <summary><span className="avatar" aria-hidden="true">{initials}</span><span>{name}</span><Icon name="summary-chevron-down" size={16} /></summary>
+              <div className="account-menu-panel">
+                <Link href="/akun">Profil saya</Link>
+                <form action={signOut}><button type="submit">Keluar</button></form>
+              </div>
+            </details>
+          )}
         </div>
       </header>
       {children}

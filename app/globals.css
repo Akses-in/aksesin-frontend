@@ -58,6 +58,9 @@ fieldset { min-width: 0; }
 .site-links { font-size: 14px; color: var(--muted); justify-content: end; }
 .site-links > a, .site-footer a { display: inline-flex; align-items: center; min-height: 44px; }
 .site-links a:hover, .site-footer a:hover { color: var(--green-dark); text-decoration: underline; }
+.signed-in .site-links { justify-content: center; }
+.signed-in .site-links > a { min-width: 44px; }
+.site-links [aria-current="page"] { color: var(--green-dark); font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
 .site-footer { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding-block: 14px; gap: 0 24px; font-size: 12px; color: var(--muted); }
 .site-footer nav { gap: 0 10px; }
 .account-menu { position: relative; color: var(--ink); }
@@ -66,9 +69,9 @@ fieldset { min-width: 0; }
 .account-menu summary > span:not(.avatar) { max-width: min(20vw, 180px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-menu summary img { flex: none; }
 .avatar { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--mint); color: var(--green); font-size: 12px; font-weight: 700; text-transform: uppercase; }
-.account-menu form { position: absolute; top: 100%; right: 0; z-index: 2; min-width: 120px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: white; box-shadow: var(--shadow); }
-.account-menu button { width: 100%; min-height: 44px; border-radius: 4px; text-align: left; padding: 0 12px; }
-.account-menu button:hover { background: var(--mint); }
+.account-menu-panel { position: absolute; top: 100%; right: 0; z-index: 2; min-width: 120px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: white; box-shadow: var(--shadow); }
+.account-menu-panel a, .account-menu-panel button { display: flex; align-items: center; width: 100%; min-height: 44px; border-radius: 4px; text-align: left; padding: 0 12px; }
+.account-menu-panel a:hover, .account-menu-panel button:hover { background: var(--mint); }
 
 .register-main { width: min(calc(100% - 2 * clamp(16px, 6.667vw, 80px)), 1040px); margin: 48px auto 40px; }
 .register-card { display: grid; grid-template-columns: minmax(0, 400fr) minmax(0, 640fr); background: white; border-radius: 20px; overflow: clip; box-shadow: var(--shadow); }
@@ -181,6 +184,9 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 
 @media (max-width: 600px) {
   .site-bar { min-height: 64px; }
+  .site-bar.signed-in { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; padding-top: 8px; }
+  .signed-in .brand { justify-self: start; }
+  .signed-in .site-links { grid-column: 1 / -1; grid-row: 2; justify-content: start; column-gap: 16px; }
   .brand { font-size: 22px; }
   .site-links { gap: 4px 12px; font-size: 13px; }
   .register-main, .onboarding-main, .narrow-main, .account-main { margin-block: 24px; }
@@ -199,7 +205,6 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 @media (max-width: 420px) {
   .register-content { padding-inline: 16px; }
   .button-row > .button { width: 100%; }
-  .site-links:has(.account-menu) > a { display: none; }
   .site-footer { padding-block: 12px 4px; }
 }
 
