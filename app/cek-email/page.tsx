@@ -11,7 +11,7 @@ export default function CheckEmailPage() {
         <section className="panel page-stack">
           <div className="page-heading">
             <h1>Cek emailmu</h1>
-            <p>Jika pendaftaran dapat diproses, kami akan mengirim tautan verifikasi. Buka tautan itu untuk melanjutkan ke preferensi aksesibilitas.</p>
+            <p>Jika pendaftaran dapat diproses, kami akan mengirim tautan verifikasi. Buka tautan di browser ini untuk melanjutkan.</p>
           </div>
           <Link className="button primary" href="/masuk">Ke halaman masuk</Link>
         </section>

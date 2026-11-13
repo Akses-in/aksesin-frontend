@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { pendingChallenge } from "@/lib/whatsapp-otp";
+import { FinishRegistration } from "./finish-registration";
 import { Site } from "../_components/site";
 import { OtpForm } from "./otp-form";
 
@@ -10,25 +10,23 @@ export const metadata: Metadata = { title: "Verifikasi WhatsApp" };
 
 async function Verification({ params }: { params: PageProps<"/verifikasi-otp">["searchParams"] }) {
   const pending = await pendingChallenge();
-  if (pending?.proof) redirect("/buat-password");
   const phone = pending?.phone;
   const { kirim } = await params;
   return (
     <section className="panel page-stack verification-panel">
       <div className="page-heading">
-        <p className="eyebrow">Langkah 2 dari 3</p>
-        <h1>Masukkan kode WhatsApp</h1>
-        <p>{phone
+        <h1>{pending?.proof ? "Selesaikan pendaftaran" : "Masukkan kode WhatsApp"}</h1>
+        <p>{pending?.proof ? "Nomor WhatsApp sudah terverifikasi." : phone
           ? `Masukkan kode 6 digit yang dikirim ke nomor berakhiran ${phone.slice(-4)}.`
           : "Sesi verifikasi tidak tersedia. Kembali ke halaman daftar untuk meminta kode."}</p>
       </div>
       {phone && (
         <>
           {kirim === "1" && <p className="notice" role="status">Kode baru sudah dikirim. Periksa WhatsApp.</p>}
-          <OtpForm />
+          {pending?.proof ? <FinishRegistration /> : <OtpForm submitLabel="Verifikasi dan buat akun" />}
         </>
       )}
-      <Link className="inline-link icon-line" href="/register">{phone ? "Ubah nomor WhatsApp" : "Ke halaman daftar"}</Link>
+      <Link className="inline-link icon-line" href="/register?metode=whatsapp">{phone ? "Ubah nomor WhatsApp" : "Ke halaman daftar"}</Link>
     </section>
   );
 }

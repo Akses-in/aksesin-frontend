@@ -12,9 +12,17 @@ Registrasi tersedia di `/register`, preferensi di `/onboarding`, dan ringkasan d
 
 Auth dan preferensi diakses dari server Next.js dengan sesi pengguna. Skema preferensi dan kebijakan RLS berada di migrasi Supabase pada repositori `aksesin-backend`.
 
-## OTP WhatsApp lewat Fonnte
+## Registrasi dan masuk
 
-Untuk masuk, pengguna memasukkan nomor WhatsApp yang sudah terverifikasi di akun, lalu kode OTP enam digit. Saat mendaftar, pengguna masih mengisi nama, memverifikasi nomor WhatsApp, dan membuat password.
+Pengguna bisa mendaftar dengan email dan password atau memverifikasi nomor WhatsApp dengan OTP. Halaman `/masuk` menyediakan pilihan email dan password atau OTP ke nomor WhatsApp yang sudah terverifikasi. Pengguna bisa menambahkan nomor WhatsApp di `/akun/edit`. Akun WhatsApp bisa menambahkan email dan password di halaman pengaturan yang sama.
+
+### Pengaturan Supabase Auth
+
+- Aktifkan provider Email dan konfirmasi email. Izinkan URL callback dari setiap `APP_ORIGIN` di Redirect URLs, termasuk parameter `tujuan` dan `sb_flow_id` jika dikirim SDK. Gunakan tautan konfirmasi bawaan Supabase agar callback menerima kode PKCE. Buka tautan di browser tempat formulir dikirim.
+- Siapkan [SMTP khusus](https://supabase.com/docs/guides/auth/auth-smtp) untuk mengirim verifikasi ke alamat pengguna di luar tim Supabase.
+- Untuk akun WhatsApp lama yang memakai alamat internal `@accounts.aksesin.invalid`, nonaktifkan **Secure email change** di provider Email agar Supabase hanya mengirim konfirmasi ke alamat baru. Pertahankan verifikasi email baru.
+
+### OTP WhatsApp lewat Fonnte
 
 Jalankan backend Express sesuai [panduan backend](../aksesin-backend/README.md#otp-whatsapp-lewat-fonnte). Frontend menggunakan `BACKEND_URL=http://127.0.0.1:3000` secara default.
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { register, signIn } from "../actions";
+import { register, registerWithWhatsApp, signInWithEmail, signInWithWhatsApp } from "../actions";
 import { ActionForm } from "./action-form";
 import { Icon } from "./site";
 
@@ -35,13 +35,40 @@ export function PasswordField({ confirmation = false, current = false }: {
   );
 }
 
-export function CredentialsForm({ login = false }: { login?: boolean }) {
+export function EmailField({ id = "email", label = "Email", login = false }: {
+  id?: string;
+  label?: string;
+  login?: boolean;
+}) {
   return (
-    <ActionForm action={login ? signIn : register} className="credentials-form">
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <div className="input-shell">
+        <input id={id} name="email" type="email" autoComplete={login ? "username" : "email"}
+          placeholder="nama@email.com"
+          autoCapitalize="none" spellCheck={false} maxLength={254} required />
+      </div>
+    </div>
+  );
+}
+
+export function CredentialsForm({ mode = "register", showAccountLink = true }: {
+  mode?: "register" | "register-whatsapp" | "email" | "whatsapp";
+  showAccountLink?: boolean;
+}) {
+  const registering = mode === "register" || mode === "register-whatsapp";
+  const whatsapp = mode === "whatsapp" || mode === "register-whatsapp";
+  const action = whatsapp
+    ? (registering ? registerWithWhatsApp : signInWithWhatsApp)
+    : (registering ? register : signInWithEmail);
+  const submitLabel = whatsapp ? "Kirim kode WhatsApp" : registering ? "Daftar akun" : "Masuk";
+
+  return (
+    <ActionForm action={action} className="credentials-form">
       {(pending, error) => (
         <>
           <fieldset className="form-fields" disabled={pending}>
-            {!login && (
+            {registering && (
               <div className="field">
                 <label htmlFor="name">Nama lengkap</label>
                 <div className="input-shell">
@@ -50,7 +77,7 @@ export function CredentialsForm({ login = false }: { login?: boolean }) {
                 </div>
               </div>
             )}
-            <div className="field">
+            {whatsapp ? <div className="field">
               <label htmlFor="identity">Nomor WhatsApp</label>
               <div className="input-shell">
                 <input id="identity" name="identity"
@@ -60,23 +87,28 @@ export function CredentialsForm({ login = false }: { login?: boolean }) {
                 />
               </div>
               <p id="identity-hint" className="small muted">
-                {login ? "Gunakan nomor WhatsApp yang terdaftar di akunmu." : "Kami akan mengirim kode verifikasi ke nomor ini."}
+                {registering ? "Kode verifikasi akan dikirim ke nomor ini." : "Gunakan nomor WhatsApp yang terdaftar di akunmu."}
               </p>
-            </div>
+            </div> : (
+              <>
+                <EmailField login={!registering} />
+                <PasswordField current={!registering} />
+                {registering && <PasswordField confirmation />}
+              </>
+            )}
           </fieldset>
 
-          {!login && <p className="small muted">Dengan membuat akun, kamu menyetujui <Link href="/ketentuan">Ketentuan Penggunaan</Link> dan telah membaca <Link href="/privasi">Kebijakan Privasi</Link>.</p>}
           {error && <p className="error" role="alert">{error}</p>}
           <div className="register-actions">
             <button className="button primary" type="submit" disabled={pending}>
-              {pending ? "Mengirim…" : "Kirim kode WhatsApp"}
+              {pending ? (whatsapp ? "Mengirim…" : "Memproses…") : submitLabel}
               <Icon name="register-arrow-right" size={17} />
             </button>
-            {!login && <p className="icon-line small muted"><Icon name="register-shield-check" size={17} />Data disabilitas tidak diperlukan untuk membuat akun.</p>}
+            {registering && <p className="auth-terms small muted">Dengan mendaftar, kamu menyetujui <Link href="/ketentuan">Ketentuan Penggunaan</Link> dan <Link href="/privasi">Kebijakan Privasi</Link>.</p>}
           </div>
-          <p className="alternate muted">
-            {login ? <>Belum punya akun? <Link href="/register">Daftar</Link></> : <>Sudah punya akun? <Link href="/masuk">Masuk</Link></>}
-          </p>
+          {showAccountLink && <p className="alternate muted">
+            {registering ? <>Sudah punya akun? <Link href="/masuk">Masuk</Link></> : <>Belum punya akun? <Link href="/register">Daftar</Link></>}
+          </p>}
         </>
       )}
     </ActionForm>
