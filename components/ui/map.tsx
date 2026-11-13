@@ -25,7 +25,7 @@
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const streetStyle = "https://tiles.openfreemap.org/styles/bright";
 
@@ -37,15 +37,19 @@ export function Map({
   center: [longitude, latitude],
   zoom,
   label,
+  children,
 }: {
   center: [number, number];
   zoom: number;
   label: string;
+  /** Lapisan tambahan (misalnya penanda tempat) yang dirender setelah peta siap. */
+  children?: (map: MapLibreMap) => ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const locationMarkerRef = useRef<Marker | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [readyMap, setReadyMap] = useState<MapLibreMap | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [location, setLocation] = useState<LocationStatus>({ state: "idle" });
 
@@ -85,7 +89,10 @@ export function Map({
       dot.setAttribute("aria-label", "Posisi saya pada peta");
       locationMarkerRef.current = new lib.Marker({ element: dot });
 
-      map.once("load", () => setStatus("ready"));
+      map.once("load", () => {
+        setStatus("ready");
+        setReadyMap(map);
+      });
       map.on("error", () => {
         setStatus((current) => current === "ready" ? current : "error");
       });
@@ -95,6 +102,7 @@ export function Map({
 
     return () => {
       cancelled = true;
+      setReadyMap(null);
       locationMarkerRef.current?.remove();
       locationMarkerRef.current = null;
       mapRef.current?.remove();
@@ -154,6 +162,7 @@ export function Map({
       )}
       {status === "ready" && (
         <>
+          {readyMap && children?.(readyMap)}
           <div className="mapcn-controls" role="group" aria-label="Kontrol peta">
             <button type="button" aria-label="Lokasi saya" title="Lokasi saya"
               aria-disabled={location.state === "locating"} onClick={locateUser}>
