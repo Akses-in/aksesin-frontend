@@ -1,20 +1,21 @@
+import type { AccessibilityAttributes, AccessibilityStatus } from "@/lib/accessibility";
+
+// Definisi status dan atribut dipakai bersama dengan peta pengguna.
+export {
+  accessibilityAttributeKeys,
+  accessibilityStatusMeta,
+  attributeLabels,
+  attributeValueLabel,
+  osmUrl,
+  type AccessibilityAttributeKey,
+  type AccessibilityAttributes,
+  type AccessibilityStatus,
+} from "@/lib/accessibility";
+
 export type ImportJobStatus = "queued" | "running" | "succeeded" | "failed";
-export type AccessibilityStatus = "accessible" | "partial" | "unknown";
 export type PlaceSource = "manual" | "osm";
 export type DeleteReason = "duplicate" | "invalid";
 
-export const accessibilityAttributeKeys = [
-  "wheelchair",
-  "toilets:wheelchair",
-  "ramp",
-  "ramp:wheelchair",
-  "elevator",
-  "tactile_paving",
-  "capacity:disabled",
-  "wheelchair:description",
-] as const;
-export type AccessibilityAttributeKey = (typeof accessibilityAttributeKeys)[number];
-export type AccessibilityAttributes = Partial<Record<AccessibilityAttributeKey, string>>;
 
 export type ImportJob = {
   id: string;
@@ -92,34 +93,6 @@ export const jobStatusMeta: Record<ImportJobStatus, { label: string; badge: Badg
   failed: { label: "Gagal", badge: "badge danger" },
 };
 
-export const accessibilityStatusMeta: Record<AccessibilityStatus, { label: string; badge: Badge }> = {
-  accessible: { label: "Accessible", badge: "badge active" },
-  partial: { label: "Partially Accessible", badge: "badge warning" },
-  unknown: { label: "Unknown", badge: "badge" },
-};
-
-export const attributeLabels: Record<AccessibilityAttributeKey, string> = {
-  wheelchair: "Akses kursi roda",
-  "toilets:wheelchair": "Toilet kursi roda",
-  ramp: "Ramp",
-  "ramp:wheelchair": "Ramp kursi roda",
-  elevator: "Lift",
-  tactile_paving: "Guiding block",
-  "capacity:disabled": "Parkir disabilitas",
-  "wheelchair:description": "Keterangan kursi roda",
-};
-
-const attributeValueLabels: Record<string, string> = {
-  yes: "Ya",
-  no: "Tidak",
-  limited: "Terbatas",
-  designated: "Khusus disabilitas",
-};
-
-export function attributeValueLabel(value: string) {
-  return attributeValueLabels[value.toLowerCase()] ?? value;
-}
-
 export const skipReasonLabels: Record<string, string> = {
   invalid_element: "Format tidak valid",
   no_name: "Tanpa nama",
@@ -167,6 +140,3 @@ export function formatWib(iso: string | null) {
   return `${Number(part("day"))} ${monthNames[Number(part("month")) - 1]} ${part("year")}, ${part("hour")}.${part("minute")} WIB`;
 }
 
-export function osmUrl(place: Pick<AdminPlace, "osmType" | "osmId">) {
-  return place.osmType && place.osmId ? `https://www.openstreetmap.org/${place.osmType}/${place.osmId}` : null;
-}
