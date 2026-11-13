@@ -1,21 +1,23 @@
-import type { AccessibilityAttributes, AccessibilityStatus } from "@/lib/accessibility";
-
-// Definisi status dan atribut dipakai bersama dengan peta pengguna.
-export {
-  accessibilityAttributeKeys,
-  accessibilityStatusMeta,
-  attributeLabels,
-  attributeValueLabel,
-  osmUrl,
-  type AccessibilityAttributeKey,
-  type AccessibilityAttributes,
-  type AccessibilityStatus,
-} from "@/lib/accessibility";
-
 export type ImportJobStatus = "queued" | "running" | "succeeded" | "failed";
+export type AccessibilityStatus = "accessible" | "partial" | "unknown";
 export type PlaceSource = "manual" | "osm";
 export type DeleteReason = "duplicate" | "invalid";
 
+export const accessibilityAttributeKeys = [
+  "wheelchair",
+  "toilets:wheelchair",
+  "ramp",
+  "ramp:wheelchair",
+  "elevator",
+  "tactile_paving",
+  "capacity:disabled",
+  "wheelchair:description",
+] as const;
+export type AccessibilityAttributeKey =
+  (typeof accessibilityAttributeKeys)[number];
+export type AccessibilityAttributes = Partial<
+  Record<AccessibilityAttributeKey, string>
+>;
 
 export type ImportJob = {
   id: string;
@@ -52,7 +54,10 @@ export type AdminPlace = {
   contributionCount: number;
 };
 
-export type DuplicateCandidate = { distanceMeters: number; places: [AdminPlace, AdminPlace] };
+export type DuplicateCandidate = {
+  distanceMeters: number;
+  places: [AdminPlace, AdminPlace];
+};
 
 export type AdminNotification = {
   id: string;
@@ -64,7 +69,12 @@ export type AdminNotification = {
   createdAt: string;
 };
 
-export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
+export type Page<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
 
 export type DeletePlaceResult = {
   id: string;
@@ -86,12 +96,46 @@ export type PlaceUpdate = Partial<{
 
 type Badge = "badge" | "badge active" | "badge warning" | "badge danger";
 
-export const jobStatusMeta: Record<ImportJobStatus, { label: string; badge: Badge }> = {
+export const jobStatusMeta: Record<
+  ImportJobStatus,
+  { label: string; badge: Badge }
+> = {
   queued: { label: "Menunggu", badge: "badge" },
   running: { label: "Berjalan", badge: "badge warning" },
   succeeded: { label: "Berhasil", badge: "badge active" },
   failed: { label: "Gagal", badge: "badge danger" },
 };
+
+export const accessibilityStatusMeta: Record<
+  AccessibilityStatus,
+  { label: string; badge: Badge }
+> = {
+  accessible: { label: "Accessible", badge: "badge active" },
+  partial: { label: "Partially Accessible", badge: "badge warning" },
+  unknown: { label: "Unknown", badge: "badge" },
+};
+
+export const attributeLabels: Record<AccessibilityAttributeKey, string> = {
+  wheelchair: "Akses kursi roda",
+  "toilets:wheelchair": "Toilet kursi roda",
+  ramp: "Ramp",
+  "ramp:wheelchair": "Ramp kursi roda",
+  elevator: "Lift",
+  tactile_paving: "Guiding block",
+  "capacity:disabled": "Parkir disabilitas",
+  "wheelchair:description": "Keterangan kursi roda",
+};
+
+const attributeValueLabels: Record<string, string> = {
+  yes: "Ya",
+  no: "Tidak",
+  limited: "Terbatas",
+  designated: "Khusus disabilitas",
+};
+
+export function attributeValueLabel(value: string) {
+  return attributeValueLabels[value.toLowerCase()] ?? value;
+}
 
 export const skipReasonLabels: Record<string, string> = {
   invalid_element: "Format tidak valid",
@@ -120,7 +164,20 @@ export function isActiveJob(job: Pick<ImportJob, "status"> | null | undefined) {
   return job?.status === "queued" || job?.status === "running";
 }
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
 const wibParts = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Jakarta",
   year: "numeric",
@@ -136,7 +193,14 @@ export function formatWib(iso: string | null) {
   if (!iso) return "-";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "-";
-  const part = (type: Intl.DateTimeFormatPartTypes) => wibParts.formatToParts(date).find((item) => item.type === type)?.value ?? "";
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    wibParts.formatToParts(date).find((item) => item.type === type)?.value ??
+    "";
   return `${Number(part("day"))} ${monthNames[Number(part("month")) - 1]} ${part("year")}, ${part("hour")}.${part("minute")} WIB`;
 }
 
+export function osmUrl(place: Pick<AdminPlace, "osmType" | "osmId">) {
+  return place.osmType && place.osmId
+    ? `https://www.openstreetmap.org/${place.osmType}/${place.osmId}`
+    : null;
+}
