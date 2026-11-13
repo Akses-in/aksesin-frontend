@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Map } from "@/components/ui/map";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { Site } from "../_components/site";
+import { AccessibilityMap } from "./place-layer";
 
 export const metadata: Metadata = { title: "Beranda" };
 
@@ -12,7 +12,7 @@ async function Home() {
   return (
     <Site name={accountName(user) || "Akun"} variant="summary" activePage="home" showFooter={false}>
       <main id="konten" className="home-map" tabIndex={-1} aria-label="Peta Beranda">
-        <Map center={[106.8224, -6.194]} zoom={16} label="Peta interaktif, tampilan awal Jakarta" />
+        <AccessibilityMap center={[106.8224, -6.194]} zoom={16} label="Peta interaktif, tampilan awal Jakarta" />
       </main>
     </Site>
   );
