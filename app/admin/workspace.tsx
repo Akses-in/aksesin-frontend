@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { accountName } from "@/lib/supabase";
 import { Icon } from "../_components/site";
 import { requireAdmin } from "./access";
@@ -7,10 +8,11 @@ import { signOutAdmin } from "./actions";
 import { adminSections, type AdminSection } from "./sections";
 
 export async function AdminWorkspace({
-  section, logoutFailed = false,
+  section, logoutFailed = false, children,
 }: {
   section?: AdminSection;
   logoutFailed?: boolean;
+  children?: ReactNode;
 }) {
   const { admin } = await requireAdmin();
   const name = admin && accountName(admin);
@@ -45,11 +47,11 @@ export async function AdminWorkspace({
         </nav>
         <main id="konten" className="page-stack admin-content" tabIndex={-1}>
           <div className="page-heading">
-            <h1>{section ? `Manajemen ${section.title.toLowerCase()}` : "Ringkasan admin"}</h1>
+            <h1>{section ? ("heading" in section ? section.heading : `Manajemen ${section.title.toLowerCase()}`) : "Ringkasan admin"}</h1>
             <p>{section?.description ?? "Pilih bagian yang ingin kamu kelola."}</p>
           </div>
           {logoutFailed && <p className="error" role="alert">Sesi belum bisa diakhiri. Coba keluar lagi.</p>}
-          {section ? (
+          {section && children ? children : section ? (
             <section className="status-card admin-empty">
               <h2>Data belum terhubung</h2>
               <p className="muted">{section.next}</p>
