@@ -6,6 +6,13 @@ export const adminSections = [
     next: "Daftar lokasi dan keputusan validasi akan tersedia setelah data peta terhubung.",
   },
   {
+    slug: "impor-osm",
+    title: "Impor OSM",
+    heading: "Impor data OpenStreetMap",
+    description: "Ambil data tempat Jakarta dari OpenStreetMap, pantau status impor, lalu rapikan data hasil impor.",
+    next: "Status impor dan daftar tempat akan tampil setelah backend terhubung.",
+  },
+  {
     slug: "pengguna",
     title: "Pengguna",
     description: "Tinjau akun yang terdaftar di Aksesin.",
