@@ -27,7 +27,7 @@ async function Verification({ params }: { params: PageProps<"/masuk/verifikasi">
           <OtpForm verifyAction={verifySignInOtp} resendAction={resendSignInOtp} submitLabel="Verifikasi dan masuk" />
         </>
       )}
-      <Link className="inline-link" href="/masuk">{pending ? "Ubah nomor WhatsApp" : "Ke halaman masuk"}</Link>
+      <Link className="inline-link" href="/masuk?metode=whatsapp">{pending ? "Ubah nomor WhatsApp" : "Ke halaman masuk"}</Link>
     </section>
   );
 }

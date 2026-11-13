@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { verifiedAccount } from "@/lib/supabase";
+import { loginEmail, newPasswordError } from "@/lib/credentials";
+import { appOrigin, verifiedAccount } from "@/lib/supabase";
 import {
   clearPendingChallenge, normalizePhone, pendingChallenge, setPendingChallenge, whatsappRequest,
 } from "@/lib/whatsapp-otp";
@@ -25,6 +26,35 @@ export async function updateAccountName(form: FormData) {
 
   revalidatePath("/akun");
   redirect("/akun?tersimpan=nama");
+}
+
+export async function addEmailCredentials(form: FormData) {
+  const { supabase, user } = await verifiedAccount(true);
+  if (user.email_confirmed_at && loginEmail(user.email)) {
+    return "Email masuk sudah terverifikasi di akunmu.";
+  }
+
+  const email = loginEmail(form.get("email"));
+  const password = form.get("password");
+  if (!email) return "Masukkan alamat email yang valid.";
+  const invalid = newPasswordError(password, form.get("confirmation"));
+  if (invalid || typeof password !== "string") return invalid ?? "Masukkan password baru.";
+
+  const options = { emailRedirectTo: new URL("/auth/callback?tujuan=akun", appOrigin()).href };
+  let { data, error } = await supabase.auth.updateUser({ email, password }, options);
+  if (error?.code === "same_password") {
+    ({ data, error } = await supabase.auth.updateUser({ email }, options));
+  }
+  if (error?.status === 429) return "Tunggu sebentar sebelum meminta tautan baru.";
+  if (error?.code === "email_exists") return "Email ini sudah dipakai akun lain. Gunakan email lain.";
+  if (error?.code === "weak_password") return "Gunakan password lain yang lebih sulit ditebak.";
+  if (error?.code === "reauthentication_needed") return "Masuk ulang dengan WhatsApp, lalu coba lagi.";
+  if (error) return "Email dan password belum dapat disimpan. Coba lagi.";
+
+  revalidatePath("/akun/edit");
+  redirect(data.user?.email_confirmed_at && loginEmail(data.user.email) === email
+    ? "/akun/edit?email=terverifikasi"
+    : "/akun/edit?email=dikirim");
 }
 
 export async function startPhoneChange(form: FormData) {

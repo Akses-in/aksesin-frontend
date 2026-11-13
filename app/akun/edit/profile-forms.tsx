@@ -1,7 +1,31 @@
 "use client";
 
 import { ActionForm } from "../../_components/action-form";
-import { startPhoneChange, updateAccountName } from "../actions";
+import { EmailField, PasswordField } from "../../_components/credentials-form";
+import { addEmailCredentials, startPhoneChange, updateAccountName } from "../actions";
+
+export function EmailCredentialsForm({ pendingEmail }: { pendingEmail?: string }) {
+  return (
+    <ActionForm action={addEmailCredentials} className="credentials-form">
+      {(pending, error) => (
+        <>
+          <p>{pendingEmail
+            ? <>Menunggu verifikasi untuk <strong>{pendingEmail}</strong>.</>
+            : "Tambahkan email dan password agar kamu juga bisa masuk lewat email."}</p>
+          <fieldset className="form-fields" disabled={pending}>
+            <EmailField id="account-email" label="Alamat email" />
+            <PasswordField />
+            <PasswordField confirmation />
+          </fieldset>
+          {error && <p className="error" role="alert">{error}</p>}
+          <button type="submit" className="button primary" disabled={pending}>
+            {pending ? "Menyimpan…" : "Simpan dan verifikasi email"}
+          </button>
+        </>
+      )}
+    </ActionForm>
+  );
+}
 
 export function NameForm({ name }: { name: string }) {
   return (
