@@ -2,7 +2,8 @@ export const adminSections = [
   {
     slug: "peta",
     title: "Peta",
-    description: "Tinjau lokasi aksesibilitas dan periksa apakah informasinya valid.",
+    heading: "Manajemen Peta",
+    description: "Kelola lokasi dan informasi aksesibilitas.",
     next: "Daftar lokasi dan keputusan validasi akan tersedia setelah data peta terhubung.",
   },
   {
