@@ -52,7 +52,10 @@ export type AdminPlace = {
   contributionCount: number;
 };
 
-export type DuplicateCandidate = { distanceMeters: number; places: [AdminPlace, AdminPlace] };
+export type DuplicateCandidate = {
+  distanceMeters: number;
+  places: [AdminPlace, AdminPlace];
+};
 
 export type AdminNotification = {
   id: string;
@@ -64,7 +67,12 @@ export type AdminNotification = {
   createdAt: string;
 };
 
-export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
+export type Page<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
 
 export type DeletePlaceResult = {
   id: string;
@@ -86,7 +94,10 @@ export type PlaceUpdate = Partial<{
 
 type Badge = "badge" | "badge active" | "badge warning" | "badge danger";
 
-export const jobStatusMeta: Record<ImportJobStatus, { label: string; badge: Badge }> = {
+export const jobStatusMeta: Record<
+  ImportJobStatus,
+  { label: string; badge: Badge }
+> = {
   queued: { label: "Menunggu", badge: "badge" },
   running: { label: "Berjalan", badge: "badge warning" },
   succeeded: { label: "Berhasil", badge: "badge active" },
@@ -120,7 +131,20 @@ export function isActiveJob(job: Pick<ImportJob, "status"> | null | undefined) {
   return job?.status === "queued" || job?.status === "running";
 }
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
 const wibParts = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Jakarta",
   year: "numeric",
@@ -136,7 +160,9 @@ export function formatWib(iso: string | null) {
   if (!iso) return "-";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "-";
-  const part = (type: Intl.DateTimeFormatPartTypes) => wibParts.formatToParts(date).find((item) => item.type === type)?.value ?? "";
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    wibParts.formatToParts(date).find((item) => item.type === type)?.value ??
+    "";
   return `${Number(part("day"))} ${monthNames[Number(part("month")) - 1]} ${part("year")}, ${part("hour")}.${part("minute")} WIB`;
 }
 
