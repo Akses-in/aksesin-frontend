@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { OsmImportSection } from "../_impor-osm/osm-import-section";
+import { PetaSection } from "../_peta/peta-section";
 import { adminSections } from "../sections";
 import { AdminWorkspace } from "../workspace";
 
@@ -12,6 +13,14 @@ async function Section({ params, searchParams }: Pick<PageProps<"/admin/[bagian]
   const { bagian } = await params;
   const section = adminSections.find(({ slug }) => slug === bagian);
   if (!section) notFound();
+
+  if (section.slug === "peta") {
+    return (
+      <AdminWorkspace section={section}>
+        <PetaSection searchParams={await searchParams} />
+      </AdminWorkspace>
+    );
+  }
 
   if (section.slug === "impor-osm") {
     return (
