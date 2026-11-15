@@ -47,7 +47,10 @@ export async function AdminWorkspace({
         </nav>
         <main id="konten" className="page-stack admin-content" tabIndex={-1}>
           <div className="page-heading">
-            <h1>{section ? ("heading" in section ? section.heading : `Manajemen ${section.title.toLowerCase()}`) : "Ringkasan admin"}</h1>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+              <h1>{section ? ("heading" in section ? section.heading : `Manajemen ${section.title.toLowerCase()}`) : "Ringkasan admin"}</h1>
+              {section && <span className="badge active" style={{ fontSize: "13px", fontWeight: "600" }}>Admin</span>}
+            </div>
             <p>{section?.description ?? "Pilih bagian yang ingin kamu kelola."}</p>
           </div>
           {logoutFailed && <p className="error" role="alert">Sesi belum bisa diakhiri. Coba keluar lagi.</p>}

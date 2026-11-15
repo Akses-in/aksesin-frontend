@@ -1,0 +1,455 @@
+/* CSS untuk Halaman Manajemen Peta (Manual Only) - Sesuai UX Screenshot */
+.peta-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: -6px;
+  margin-bottom: 8px;
+}
+
+.peta-maps-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green-dark);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+.peta-maps-link:hover {
+  text-decoration: underline;
+}
+
+.peta-btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #15202e;
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.peta-btn-add:hover {
+  background-color: #000000;
+}
+
+/* Ringkasan Lokasi */
+.peta-stats-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.peta-stats-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+
+.peta-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.peta-stat-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+}
+.peta-stat-item:first-child {
+  padding-left: 0;
+}
+.peta-stat-item + .peta-stat-item {
+  border-left: 1px solid var(--border);
+}
+
+.peta-stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.peta-stat-number.green {
+  color: #087c53;
+}
+
+.peta-stat-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Daftar Lokasi */
+.peta-list-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.peta-search-shell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 4px 16px;
+}
+.peta-search-shell input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 14px;
+  outline: none;
+}
+
+.peta-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.peta-select-shell {
+  min-width: 170px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 2px 10px;
+}
+.peta-select-shell select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 4px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.peta-count-info {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.peta-places-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.peta-place-item {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 0.15s ease;
+}
+.peta-place-item:hover {
+  border-color: #b9cec2;
+}
+
+.peta-thumb-box {
+  width: 88px;
+  height: 68px;
+  border-radius: 8px;
+  background: var(--input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.peta-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.peta-thumb-placeholder {
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.peta-place-info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.peta-item-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peta-item-address {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peta-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.peta-item-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.peta-item-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.peta-status-pill {
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+.peta-status-pill.accessible {
+  background: #e7f7ef;
+  color: #087c53;
+}
+.peta-status-pill.partial {
+  background: #fef4e6;
+  color: #8a4b08;
+}
+.peta-status-pill.unknown {
+  background: #f1f4f3;
+  color: #475660;
+}
+
+.peta-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.peta-btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.peta-btn-edit:hover {
+  color: var(--green-dark);
+}
+
+.peta-btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c92a2a;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.peta-btn-delete:hover {
+  color: #922c19;
+}
+
+/* Modal Form Tambah / Ubah */
+.peta-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.peta-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 28px;
+}
+
+.peta-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.peta-modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.peta-form {
+  display: grid;
+  gap: 16px;
+}
+
+.peta-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.peta-field {
+  display: grid;
+  gap: 6px;
+}
+.peta-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.peta-input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+.peta-input:focus {
+  border-color: var(--green);
+  outline: 2px solid var(--green);
+}
+
+.peta-facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.peta-facility-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--input);
+}
+.peta-facility-checkbox:has(input:checked) {
+  background: var(--mint);
+  border-color: var(--green);
+  color: var(--green-dark);
+}
+
+.peta-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Pagination */
+.peta-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.peta-page-btn {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+.peta-page-btn.active {
+  background: var(--mint);
+  border-color: var(--green);
+  color: var(--green-dark);
+  font-weight: 700;
+}
+.peta-page-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .peta-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .peta-stat-item + .peta-stat-item {
+    border-left: none;
+  }
+  .peta-place-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .peta-item-actions-cell {
+    justify-content: space-between;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+}

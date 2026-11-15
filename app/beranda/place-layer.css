@@ -1,4 +1,4 @@
-/* Lapisan tempat di peta beranda (PBI-05, PBI-06) */
+/* Lapisan tempat di peta beranda (PBI-05, PBI-06, Search) */
 .places-visually-hidden {
   position: absolute;
   width: 1px;
@@ -8,14 +8,225 @@
   white-space: nowrap;
 }
 
+/* Floating Search Bar (Google Maps Style) */
+.place-search-container {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100% - 28px));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.place-search-input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 0 16px;
+  height: 48px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.place-search-input-box:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 4px 20px rgba(8, 124, 83, 0.16);
+}
+
+.place-search-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.place-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+}
+
+.place-search-input::placeholder {
+  color: var(--muted);
+}
+
+.place-search-spinner {
+  color: var(--green);
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.place-search-clear-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: var(--input);
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.place-search-clear-btn:hover {
+  background: #e2e8f0;
+  color: var(--ink);
+}
+
+/* Dropdown Hasil Pencarian */
+.place-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: min(400px, 60vh);
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.place-search-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.place-search-empty {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.place-search-empty-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.place-search-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.place-search-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.place-search-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.place-search-item-btn:hover {
+  background: var(--mint);
+}
+
+.place-search-item-btn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.place-search-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.place-search-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.place-search-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-search-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.place-search-badge.manual {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.place-search-badge.osm {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.place-search-item-sub {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-search-item-status-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.place-search-status-text {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Places Panel (Legenda dan Daftar Tempat) */
 .places-panel {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 14px;
+  left: 14px;
   z-index: 1;
   display: grid;
   gap: 8px;
-  width: min(280px, calc(100% - 24px));
+  width: min(280px, calc(100% - 28px));
   max-height: calc(100% - 120px);
   overflow-y: auto;
   padding: 12px 14px;
@@ -64,34 +275,78 @@
 .places-list-name { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .places-attribution a { display: inline-flex; align-items: center; min-height: 44px; color: var(--green-dark); text-decoration: underline; }
 
+/* Place Card (Preview Tempat) */
 .place-card {
   position: absolute;
-  left: 12px;
+  left: 14px;
   bottom: 40px;
   z-index: 2;
   display: grid;
-  gap: 8px;
-  width: min(340px, calc(100% - 92px));
+  gap: 10px;
+  width: min(360px, calc(100% - 92px));
   max-height: calc(100% - 64px);
   overflow-y: auto;
-  padding: 14px 16px;
+  padding: 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: white;
   box-shadow: var(--shadow);
 }
-.place-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.place-card-head h2 { font-size: 17px; overflow-wrap: anywhere; }
+.place-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.place-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.place-card-head h2 { font-size: 17px; margin: 0; overflow-wrap: anywhere; }
 .place-card-head h2:focus-visible { outline-offset: 2px; }
-.place-card-head .text-button { flex: none; margin-top: -10px; }
+.place-card-head .text-button { flex: none; margin-top: -6px; }
+
+.place-card-meta-list {
+  display: grid;
+  gap: 2px;
+}
+.place-card-meta-list p { margin: 0; }
+
+.place-card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.place-card-facilities {
+  display: grid;
+  gap: 6px;
+}
+.place-card-facilities-title {
+  font-weight: 600;
+  margin: 0;
+}
+
 .place-card-attributes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 0; }
 .place-card-attributes dt { font-size: 12px; color: var(--muted); }
-.place-card-attributes dd { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.place-card-attributes dd { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; margin: 0; }
 .place-card-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--green-dark); font-weight: 600; text-decoration: underline; }
+
+@media (max-width: 768px) {
+  /* Di layar kecil hingga menengah, letakkan panel di bawah floating search bar */
+  .places-panel {
+    top: 72px;
+  }
+}
 
 @media (max-width: 600px) {
   .places-panel { max-height: 45%; padding: 10px 12px; }
-  /* Layar kecil: kartu detail menggantikan panel supaya peta tetap terlihat. */
+  /* Layar kecil: kartu detail menggantikan panel legenda supaya peta tetap terlihat */
   .places-panel:has(~ .place-card) { display: none; }
   .place-card { right: 68px; width: auto; max-height: 55%; }
   .place-card-attributes { grid-template-columns: minmax(0, 1fr); }
