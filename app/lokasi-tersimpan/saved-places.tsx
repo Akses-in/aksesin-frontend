@@ -1,22 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
-import { addSavedPlace, removeSavedPlace, searchPlaces, type PlaceOption } from "./place-actions";
-
-export type SavedPlace = PlaceOption & { savedId: string };
+import { formatDateId } from "@/lib/digital-card";
+import { savedPlaceLabelLimit, savedPlaceNoteLimit, type PlaceOption, type SavedPlace } from "@/lib/saved-places";
+import { ActionForm } from "../_components/action-form";
+import { addSavedPlace, removeSavedPlace, searchPlaces, updateSavedPlace } from "./place-actions";
 
 function describe(place: PlaceOption) {
   return [place.category, place.address].filter(Boolean).join(" · ");
 }
 
-export function SavedPlaces({ places }: { places: SavedPlace[] }) {
-  const router = useRouter();
+export function SavedPlaces({ places, showSearch = true }: { places: SavedPlace[]; showSearch?: boolean }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlaceOption[] | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState("");
+  const [editing, setEditing] = useState("");
   const [pending, startTransition] = useTransition();
   const savedIds = new Set(places.map((place) => place.id));
 
@@ -49,7 +50,6 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
       setQuery("");
       setResults(null);
       setNote("Lokasi disimpan.");
-      router.refresh();
     });
   }
 
@@ -64,13 +64,12 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
       }
       setConfirming("");
       setNote("Lokasi dihapus.");
-      router.refresh();
     });
   }
 
   return (
     <>
-      <form className="place-search" onSubmit={search}>
+      {showSearch && <form className="place-search" onSubmit={search}>
         <div className="field">
           <label htmlFor="place-query">Cari tempat</label>
           <div className="input-shell">
@@ -83,7 +82,7 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
         <button type="submit" className="button secondary" disabled={pending}>
           {pending ? "Memproses…" : "Cari tempat"}
         </button>
-      </form>
+      </form>}
 
       {error && <p className="error" role="alert">{error}</p>}
       {note && <p className="notice" role="status">{note}</p>}
@@ -112,16 +111,52 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
       )}
 
       <div className="place-group">
-        <p className="place-group-title">Tersimpan</p>
+        {showSearch && <p className="place-group-title">Tersimpan</p>}
         {places.length ? (
           <ul className="saved-list" aria-label="Lokasi tersimpan">
             {places.map((place) => (
               <li key={place.savedId} className="saved-item">
                 <div>
-                  <p className="place-name">{place.name}</p>
+                  <p className="place-name">{place.label || place.name}</p>
+                  {place.label && <p className="place-meta">{place.name}</p>}
                   <p className="place-meta">{describe(place)}</p>
+                  {place.note && <p className="small saved-notes">{place.note}</p>}
+                  <p className="place-meta">Disimpan {formatDateId(place.createdAt)}</p>
                 </div>
-                {confirming === place.savedId ? (
+                {editing === place.savedId ? (
+                  <ActionForm className="saved-edit" action={async (form) => {
+                    setNote("");
+                    const message = await updateSavedPlace(place.savedId, form);
+                    if (!message) {
+                      setEditing("");
+                      setNote("Simpanan diperbarui.");
+                    }
+                    return message;
+                  }}>
+                    {(updating, updateError) => (
+                      <>
+                        <label className="field">
+                          <span>Nama simpanan (opsional)</span>
+                          <span className="input-shell">
+                            <input name="label" defaultValue={place.label ?? ""} placeholder={place.name}
+                              maxLength={savedPlaceLabelLimit} disabled={updating} />
+                          </span>
+                        </label>
+                        <label className="field">
+                          <span>Catatan pribadi (opsional)</span>
+                          <textarea name="note" defaultValue={place.note ?? ""} maxLength={savedPlaceNoteLimit} disabled={updating} />
+                        </label>
+                        {updateError && <p className="error" role="alert">{updateError}</p>}
+                        <div className="saved-confirm">
+                          <button type="submit" className="button primary" disabled={updating}>
+                            {updating ? "Menyimpan…" : "Simpan perubahan"}
+                          </button>
+                          <button type="button" className="text-button" disabled={updating} onClick={() => setEditing("")}>Batal</button>
+                        </div>
+                      </>
+                    )}
+                  </ActionForm>
+                ) : confirming === place.savedId ? (
                   <div className="saved-confirm">
                     <button type="button" className="text-button" disabled={pending} onClick={() => setConfirming("")}>
                       Batal
@@ -131,9 +166,23 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" className="text-button text-danger" disabled={pending} onClick={() => setConfirming(place.savedId)}>
-                    Hapus
-                  </button>
+                  <div className="saved-confirm">
+                    <button type="button" className="text-button" disabled={pending || Boolean(editing)}
+                      aria-label={`Ubah simpanan ${place.label || place.name}`}
+                      onClick={() => {
+                        setConfirming("");
+                        setError("");
+                        setNote("");
+                        setEditing(place.savedId);
+                      }}>
+                      Ubah
+                    </button>
+                    <button type="button" className="text-button text-danger" disabled={pending || Boolean(editing)}
+                      aria-label={`Hapus simpanan ${place.label || place.name}`}
+                      onClick={() => setConfirming(place.savedId)}>
+                      Hapus
+                    </button>
+                  </div>
                 )}
               </li>
             ))}
@@ -141,6 +190,7 @@ export function SavedPlaces({ places }: { places: SavedPlace[] }) {
         ) : (
           <div className="empty-activity-card" role="status">
             <p className="empty-activity-title">Belum ada lokasi yang disimpan.</p>
+            <Link className="text-button inline-link" href="/beranda">Cari lokasi di peta</Link>
           </div>
         )}
       </div>

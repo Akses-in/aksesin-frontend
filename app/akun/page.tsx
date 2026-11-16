@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { preferencesFields, type Preferences } from "@/lib/preferences";
+import { readSavedPlaces, savedPlaceActivity } from "@/lib/saved-places";
 import {
   cardStatusMap,
   formatDateId,
@@ -18,8 +19,7 @@ import {
 } from "@/lib/profile";
 import { RetryButton } from "../_components/retry-button";
 import { Icon, Site } from "../_components/site";
-import type { PlaceOption } from "./place-actions";
-import { SavedPlaces, type SavedPlace } from "./saved-places";
+import { SavedPlaces } from "../lokasi-tersimpan/saved-places";
 
 export const metadata: Metadata = { title: "Profil dan kebutuhan aksesibilitas" };
 
@@ -29,7 +29,7 @@ function missingTable(code?: string) {
 
 type ActivityEntry = {
   id: string;
-  type: "comment" | "contribution" | "notification";
+  type: "comment" | "contribution" | "notification" | "saved";
   badge?: string;
   badgeClass?: string;
   title: string;
@@ -46,6 +46,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
     { data: activityRows, error: activityError },
     { data: commentRows, error: commentError },
     { data: contributionRows, error: contributionError },
+    { places: savedPlaces, error: savedError },
   ] = await Promise.all([
     supabase.from("accessibility_preferences")
       .select(preferencesFields).eq("user_id", user.id).maybeSingle<Preferences>(),
@@ -61,6 +62,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
     supabase.from("accessibility_contributions")
       .select("id, place_id, notes, status, submitted_at").eq("user_id", user.id)
       .order("submitted_at", { ascending: false }).limit(10),
+    readSavedPlaces(supabase, user.id),
   ]);
   const { keluar, tersimpan } = await params;
   const name = accountName(user);
@@ -134,6 +136,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
     ...commentActivities,
     ...contributionActivities,
     ...notificationActivities,
+    ...savedPlaces.map(savedPlaceActivity),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const cardLoadFailed = Boolean(cardError && !missingTable(cardError.code));
@@ -143,29 +146,6 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
     (contributionError && !missingTable(contributionError.code))
   );
   const cardStatus = latestCard ? cardStatusMap[latestCard.status] : null;
-
-  const { data: savedRows, error: savedError } = await supabase
-    .from("saved_places").select("id, place_id").eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-  const savedLinks = (savedRows ?? []) as Array<{ id: string; place_id: string }>;
-  let savedLoadFailed = Boolean(savedError && !missingTable(savedError.code));
-  let savedPlaces: SavedPlace[] = [];
-
-  if (!savedLoadFailed && savedLinks.length) {
-    const { data: placeRows, error: placesError } = await supabase.from("places")
-      .select("id, name, category, address").in("id", savedLinks.map((row) => row.place_id));
-    if (placesError && !missingTable(placesError.code)) {
-      savedLoadFailed = true;
-    } else {
-      const byId = new Map<string, PlaceOption>(
-        ((placeRows ?? []) as PlaceOption[]).map((place) => [place.id, place]),
-      );
-      savedPlaces = savedLinks.flatMap((row) => {
-        const place = byId.get(row.place_id);
-        return place ? [{ savedId: row.id, ...place }] : [];
-      });
-    }
-  }
 
   return (
     <Site name={name || "Akun"} variant="summary">
@@ -310,7 +290,7 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
               ) : activities.length ? (
                 <ol className="activity-list" aria-label="Riwayat aktivitas saya">
                   {activities.map((item) => (
-                    <li className="activity-item" key={item.id}>
+                    <li className="activity-item" key={`${item.type}:${item.id}`}>
                       <div className="status-heading">
                         <p className="activity-time">{formatDateId(item.created_at)}</p>
                         {item.badge && (
@@ -319,12 +299,12 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
                       </div>
                       <p className="activity-title">{item.title}</p>
                       {item.subtitle && <p className="place-meta">{item.subtitle}</p>}
-                      <p className="activity-message">{item.message}</p>
+                      {item.message && <p className="activity-message">{item.message}</p>}
                     </li>
                   ))}
                 </ol>
               ) : (
-                <p className="muted">Belum ada riwayat aktivitas. Komentar pada postingan komunitas dan kontribusi review lokasi yang kamu kirim akan muncul di sini.</p>
+                <p className="muted">Belum ada aktivitas. Komentar, review, dan lokasi yang kamu simpan akan muncul di sini.</p>
               )}
             </div>
           </section>
@@ -333,9 +313,9 @@ async function Profile({ params }: { params: PageProps<"/akun">["searchParams"] 
             <div className="profile-block">
               <div className="profile-block-head">
                 <h2>Lokasi tersimpan</h2>
-                <Link className="profile-action" href="/lokasi-tersimpan" aria-label="Buka halaman lokasi tersimpan">Buka peta</Link>
+                <Link className="profile-action" href="/lokasi-tersimpan">Buka daftar</Link>
               </div>
-              {savedLoadFailed ? (
+              {savedError ? (
                 <p className="error" role="alert">Lokasi tersimpan belum dapat dimuat. Coba muat ulang halaman.</p>
               ) : (
                 <SavedPlaces places={savedPlaces} />

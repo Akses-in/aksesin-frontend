@@ -336,6 +336,7 @@
 .place-card-attributes dt { font-size: 12px; color: var(--muted); }
 .place-card-attributes dd { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; margin: 0; }
 .place-card-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--green-dark); font-weight: 600; text-decoration: underline; }
+.place-card-save { display: grid; justify-items: start; gap: 4px; }
 
 @media (max-width: 768px) {
   /* Di layar kecil hingga menengah, letakkan panel di bawah floating search bar */
