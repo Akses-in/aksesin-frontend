@@ -2,14 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { isUuid } from "@/lib/place";
+import { savedPlaceLabelLimit, savedPlaceNoteLimit, type PlaceOption } from "@/lib/saved-places";
 import { verifiedAccount } from "@/lib/supabase";
 
-export type PlaceOption = {
-  id: string;
-  name: string;
-  category: string;
-  address: string;
-};
+function refreshSavedPlaces() {
+  revalidatePath("/beranda");
+  revalidatePath("/lokasi-tersimpan");
+  revalidatePath("/akun");
+  revalidatePath("/riwayat-aktivitas");
+}
 
 export async function searchPlaces(query: string): Promise<PlaceOption[]> {
   const { supabase } = await verifiedAccount(true);
@@ -27,14 +28,39 @@ export async function searchPlaces(query: string): Promise<PlaceOption[]> {
 }
 
 export async function addSavedPlace(placeId: string) {
-  if (!isUuid(placeId)) return "Lokasi tidak dikenali. Pilih dari hasil pencarian.";
+  if (!isUuid(placeId)) return "Lokasi tidak dikenali. Pilih lokasi lagi.";
   const { supabase, user } = await verifiedAccount(true);
 
   const { error } = await supabase.from("saved_places")
     .upsert({ user_id: user.id, place_id: placeId }, { onConflict: "user_id,place_id", ignoreDuplicates: true });
 
   if (error) return "Lokasi belum dapat disimpan. Coba lagi.";
-  revalidatePath("/lokasi-tersimpan");
+  refreshSavedPlaces();
+  return "";
+}
+
+export async function updateSavedPlace(id: string, form: FormData) {
+  if (!isUuid(id)) return "Lokasi tidak dikenali. Muat ulang halaman.";
+  const label = form.get("label");
+  const note = form.get("note");
+  if (typeof label !== "string" || typeof note !== "string") return "Isian belum valid.";
+  const trimmedLabel = label.trim();
+  const trimmedNote = note.trim();
+  if (trimmedLabel.length > savedPlaceLabelLimit || trimmedNote.length > savedPlaceNoteLimit) {
+    return `Nama simpanan maksimal ${savedPlaceLabelLimit} karakter dan catatan maksimal ${savedPlaceNoteLimit} karakter.`;
+  }
+
+  const { supabase, user } = await verifiedAccount(true);
+  const { data, error } = await supabase.from("saved_places")
+    .update({ label: trimmedLabel || null, note: trimmedNote || null })
+    .eq("id", id).eq("user_id", user.id).select("id").maybeSingle();
+
+  if (error) return "Perubahan belum dapat disimpan. Coba lagi.";
+  if (!data) {
+    refreshSavedPlaces();
+    return "Simpanan tidak ditemukan.";
+  }
+  refreshSavedPlaces();
   return "";
 }
 
@@ -46,6 +72,6 @@ export async function removeSavedPlace(id: string) {
     .delete().eq("id", id).eq("user_id", user.id);
 
   if (error) return "Lokasi belum dapat dihapus. Coba lagi.";
-  revalidatePath("/lokasi-tersimpan");
+  refreshSavedPlaces();
   return "";
 }

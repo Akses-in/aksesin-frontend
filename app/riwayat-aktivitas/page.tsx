@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { readSavedPlaces, savedPlaceActivity } from "@/lib/saved-places";
 import { accountName, verifiedAccount } from "@/lib/supabase";
 import { RetryButton } from "../_components/retry-button";
 import { Icon, Site } from "../_components/site";
-import type { PlaceOption } from "../akun/place-actions";
-import { ActivityFeed, type ActivityItem, type SavedPlaceItem } from "./activity-feed";
+import { ActivityFeed, type ActivityItem } from "./activity-feed";
 
 export const metadata: Metadata = { title: "Riwayat aktivitas" };
 
@@ -19,7 +19,7 @@ async function UserActivities() {
   const [
     { data: commentRows, error: commentError },
     { data: contributionRows, error: contributionError },
-    { data: savedRows, error: savedError },
+    { places: savedPlaces, error: savedError },
   ] = await Promise.all([
     supabase
       .from("community_comments")
@@ -33,21 +33,16 @@ async function UserActivities() {
       .eq("user_id", user.id)
       .order("submitted_at", { ascending: false })
       .limit(30),
-    supabase
-      .from("saved_places")
-      .select("id, place_id, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false }),
+    readSavedPlaces(supabase, user.id),
   ]);
 
   const loadFailed = Boolean(
     (commentError && !missingTable(commentError.code)) ||
     (contributionError && !missingTable(contributionError.code)) ||
-    (savedError && !missingTable(savedError.code)),
+    savedError,
   );
 
   let activities: ActivityItem[] = [];
-  let savedPlaces: SavedPlaceItem[] = [];
 
   if (!loadFailed) {
     // 1. Resolve comments & post titles
@@ -111,40 +106,9 @@ async function UserActivities() {
       };
     });
 
-    // Merge and sort chronological descending
-    activities = [...commentItems, ...contributionItems].sort(
+    activities = [...commentItems, ...contributionItems, ...savedPlaces.map(savedPlaceActivity)].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
-
-    // 3. Resolve saved places
-    const savedLinks = (savedRows ?? []) as Array<{ id: string; place_id: string; created_at?: string }>;
-    if (savedLinks.length) {
-      const { data: savedPlaceRows, error: savedPlacesError } = await supabase
-        .from("places")
-        .select("id, name, category, address")
-        .in("id", savedLinks.map((row) => row.place_id));
-
-      if (!savedPlacesError || missingTable(savedPlacesError.code)) {
-        const byId = new Map<string, PlaceOption>(
-          ((savedPlaceRows ?? []) as PlaceOption[]).map((place) => [place.id, place]),
-        );
-        savedPlaces = savedLinks.flatMap((row) => {
-          const place = byId.get(row.place_id);
-          return place
-            ? [
-                {
-                  savedId: row.id,
-                  id: place.id,
-                  name: place.name,
-                  category: place.category,
-                  address: place.address,
-                  created_at: row.created_at,
-                },
-              ]
-            : [];
-        });
-      }
-    }
   }
 
   return (

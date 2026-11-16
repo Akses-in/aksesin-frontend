@@ -1,6 +1,7 @@
 "use client";
 
 import type { GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Search, X } from "lucide-react";
 import { Map } from "@/components/ui/map";
@@ -14,6 +15,8 @@ import {
   type AccessibilityStatus,
 } from "@/lib/accessibility";
 import "./place-layer.css";
+import { ActionForm } from "../_components/action-form";
+import { addSavedPlace } from "../lokasi-tersimpan/place-actions";
 
 type PublicPlace = {
   id: string;
@@ -64,7 +67,7 @@ function statusIcon({ color, glyph, glyphColor }: (typeof statusStyle)[Accessibi
   return context.getImageData(0, 0, size, size);
 }
 
-function PlaceLayer({ map }: { map: MapLibreMap }) {
+function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: string[] }) {
   const [places, setPlaces] = useState<PublicPlace[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [truncated, setTruncated] = useState(false);
@@ -501,6 +504,24 @@ function PlaceLayer({ map }: { map: MapLibreMap }) {
             </button>
           </div>
 
+          {savedPlaceIds.includes(selected.id) ? (
+            <div className="place-card-save">
+              <p className="small" role="status">Lokasi tersimpan.</p>
+              <Link className="place-card-link small" href="/lokasi-tersimpan">Kelola lokasi tersimpan</Link>
+            </div>
+          ) : (
+            <ActionForm key={selected.id} className="place-card-save" action={() => addSavedPlace(selected.id)}>
+              {(pending, error) => (
+                <>
+                  <button type="submit" className="button primary" disabled={pending}>
+                    {pending ? "Menyimpan…" : "Simpan lokasi"}
+                  </button>
+                  {error && <p className="error small" role="alert">{error}</p>}
+                </>
+              )}
+            </ActionForm>
+          )}
+
           <div className="place-card-meta-list small">
             {selected.category && (
               <p>
@@ -555,6 +576,6 @@ function PlaceLayer({ map }: { map: MapLibreMap }) {
   );
 }
 
-export function AccessibilityMap(props: { center: [number, number]; zoom: number; label: string }) {
-  return <Map {...props}>{(map) => <PlaceLayer map={map} />}</Map>;
+export function AccessibilityMap({ savedPlaceIds, ...props }: { center: [number, number]; zoom: number; label: string; savedPlaceIds: string[] }) {
+  return <Map {...props}>{(map) => <PlaceLayer map={map} savedPlaceIds={savedPlaceIds} />}</Map>;
 }

@@ -385,7 +385,9 @@ textarea { width: 100%; min-height: 88px; padding: 12px 14px; resize: vertical; 
 .place-name { font-weight: 600; }
 .place-meta { color: var(--muted); font-size: 13px; }
 .place-saved { align-self: center; }
-.saved-confirm { display: flex; align-items: center; gap: 8px; }
+.saved-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.saved-confirm .text-button { min-width: 44px; }
+.saved-edit { display: grid; gap: 12px; flex-basis: 100%; min-width: 0; }
 .text-danger { color: #922c19; }
 
 @media (max-width: 600px) {
