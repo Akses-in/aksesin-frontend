@@ -42,8 +42,7 @@ export function Map({
   center: [number, number];
   zoom: number;
   label: string;
-  /** Lapisan tambahan (misalnya penanda tempat) yang dirender setelah peta siap. */
-  children?: (map: MapLibreMap) => ReactNode;
+  children?: (map: MapLibreMap | null) => ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -160,9 +159,9 @@ export function Map({
           }}>Coba lagi</button>
         </div>
       )}
+      {children?.(readyMap)}
       {status === "ready" && (
         <>
-          {readyMap && children?.(readyMap)}
           <div className="mapcn-controls" role="group" aria-label="Kontrol peta">
             <button type="button" aria-label="Lokasi saya" title="Lokasi saya"
               aria-disabled={location.state === "locating"} onClick={locateUser}>

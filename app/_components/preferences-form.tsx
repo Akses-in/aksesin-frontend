@@ -17,6 +17,7 @@ export function PreferencesForm({
 }) {
   const [status, setStatus] = useState(preferences?.disability_status ?? "");
   const [notes, setNotes] = useState(preferences?.notes ?? "");
+  const [needs, setNeeds] = useState(preferences?.needs ?? []);
   const onboarding = context === "onboarding";
 
   return (
@@ -24,6 +25,7 @@ export function PreferencesForm({
       {(pending, error) => (
         <>
           <input type="hidden" name="context" value={context} />
+          {needs.map((need) => <input key={need} type="hidden" name="needs" value={need} />)}
 
           <fieldset className="choice-group" disabled={pending} aria-describedby="disability-hint">
             <legend>Status disabilitas (opsional)</legend>
@@ -47,7 +49,10 @@ export function PreferencesForm({
               {accessibilityOptions.map(([value, label]) => (
                 <label className="choice" key={value}>
                   <span className="checkbox">
-                    <input type="checkbox" name="needs" value={value} defaultChecked={preferences?.needs.includes(value)} />
+                    <input type="checkbox" checked={needs.includes(value)} onChange={(event) => {
+                      const checked = event.target.checked;
+                      setNeeds((current) => checked ? [...current, value] : current.filter((need) => need !== value));
+                    }} />
                     <Icon name="preferences-check" size={13} />
                   </span>
                   {label}
