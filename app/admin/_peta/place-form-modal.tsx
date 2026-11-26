@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { placeCategories } from "@/lib/preferences";
 import { createManualPlaceAction, updateManualPlaceAction } from "./actions";
 
 interface PlaceFormModalProps {
@@ -17,18 +18,6 @@ interface PlaceFormModalProps {
     accessibilityAttributes: Record<string, string>;
   } | null;
 }
-
-const CATEGORIES = [
-  "Pendidikan",
-  "Kesehatan",
-  "Transportasi",
-  "Perbelanjaan",
-  "Taman",
-  "Layanan Publik",
-  "Wisata dan Budaya",
-  "Tempat Ibadah",
-  "Lainnya",
-];
 
 const FACILITIES = [
   { key: "ramp", label: "Ramp / Jalur Landai" },
@@ -114,7 +103,7 @@ export function PlaceFormModal({ isOpen, onClose, initialData }: PlaceFormModalP
               defaultValue={initialData?.category ?? "Pusat Perbelanjaan"}
               className="peta-input"
             >
-              {CATEGORIES.map((cat) => (
+              {placeCategories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>

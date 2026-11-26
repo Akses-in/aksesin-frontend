@@ -14,9 +14,11 @@ import {
   type AccessibilityAttributes,
   type AccessibilityStatus,
 } from "@/lib/accessibility";
+import { matchPlace, type PlacePreferences } from "@/lib/preferences";
 import "./place-layer.css";
 import { ActionForm } from "../_components/action-form";
 import { addSavedPlace } from "../lokasi-tersimpan/place-actions";
+import { PreferencesPanel } from "./preferences-panel";
 
 type PublicPlace = {
   id: string;
@@ -67,7 +69,9 @@ function statusIcon({ color, glyph, glyphColor }: (typeof statusStyle)[Accessibi
   return context.getImageData(0, 0, size, size);
 }
 
-function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: string[] }) {
+type PlaceLayerProps = { savedPlaceIds: string[]; preferences: PlacePreferences; preferencesUnavailable: boolean };
+
+function PlaceLayer({ map, savedPlaceIds, preferences, preferencesUnavailable }: PlaceLayerProps & { map: MapLibreMap | null }) {
   const [places, setPlaces] = useState<PublicPlace[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [truncated, setTruncated] = useState(false);
@@ -80,6 +84,9 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   const [isSearching, setIsSearching] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const [sortByMatch, setSortByMatch] = useState(false);
 
   const cardHeadingRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -94,7 +101,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
 
   // Sinkronisasi data GeoJSON source pada peta
   const updateMapSource = useCallback((items: PublicPlace[]) => {
-    const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    const source = map?.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     source?.setData({
       type: "FeatureCollection",
       features: items.map((place) => ({
@@ -106,6 +113,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   }, [map]);
 
   useEffect(() => {
+    if (!map) return;
     for (const status of statusOrder) {
       const id = `aksesin-status-${status}`;
       const image = statusIcon(statusStyle[status]);
@@ -139,7 +147,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
     let controller: AbortController | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
-    async function load() {
+    const load = async () => {
       controller?.abort();
       controller = new AbortController();
       const bounds = map.getBounds();
@@ -165,7 +173,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
       } catch (error) {
         if ((error as Error).name !== "AbortError") setState("error");
       }
-    }
+    };
 
     function scheduleLoad() {
       clearTimeout(timer);
@@ -207,7 +215,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   }, [map, reloadKey, updateMapSource]);
 
   useEffect(() => {
-    if (map.getLayer(SELECTED_LAYER_ID)) {
+    if (map?.getLayer(SELECTED_LAYER_ID)) {
       map.setFilter(SELECTED_LAYER_ID, ["==", ["get", "id"], selected?.id ?? ""]);
     }
     if (selected) {
@@ -232,15 +240,12 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   function handleSearchChange(value: string) {
     setSearchQuery(value);
     setIsDropdownOpen(true);
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setSearchResults([]);
-      setIsSearching(false);
-      setHasSearched(false);
-    }
+    setSearchResults([]);
+    setSearchError(false);
+    setHasSearched(false);
+    setIsSearching(Boolean(value.trim()));
   }
 
-  // Debounced search
   useEffect(() => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return;
@@ -254,17 +259,18 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
           signal: controller.signal,
         });
         const body = await response.json();
-        if (response.ok && body?.data?.items) {
+        if (!response.ok || !Array.isArray(body?.data?.items)) throw new Error("Hasil pencarian tidak tersedia");
+        if (!controller.signal.aborted) {
           setSearchResults(body.data.items as PublicPlace[]);
-        } else {
-          setSearchResults([]);
+          setSearchError(false);
         }
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
+      } catch {
+        if (!controller.signal.aborted) {
           setSearchResults([]);
+          setSearchError(true);
         }
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     }, 280);
 
@@ -272,9 +278,10 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery]);
+  }, [searchQuery, searchAttempt]);
 
   function handleSelectPlace(place: PublicPlace) {
+    returnFocusRef.current = searchInputRef.current;
     setSearchQuery(place.name);
     setIsDropdownOpen(false);
 
@@ -289,7 +296,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
     setSelected(place);
 
     // Animasi kamera peta ke lokasi tempat dan perbesar zoom
-    map.flyTo({
+    map?.flyTo({
       center: [place.longitude, place.latitude],
       zoom: Math.max(map.getZoom(), 16),
       duration: 800,
@@ -301,13 +308,15 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
     setSearchResults([]);
     setIsDropdownOpen(false);
     setHasSearched(false);
+    setSearchError(false);
+    setIsSearching(false);
     searchInputRef.current?.focus();
   }
 
   function openFromList(place: PublicPlace, trigger: HTMLElement) {
     returnFocusRef.current = trigger;
     setSelected(place);
-    map.easeTo({ center: [place.longitude, place.latitude], zoom: Math.max(map.getZoom(), 16), duration: 600 });
+    map?.easeTo({ center: [place.longitude, place.latitude], zoom: Math.max(map.getZoom(), 16), duration: 600 });
   }
 
   function closeCard() {
@@ -320,16 +329,28 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   }));
   const link = selected ? osmUrl(selected) : null;
   const attributes = selected ? accessibilityAttributeKeys.filter((key) => selected.accessibilityAttributes[key]) : [];
+  const selectedMatch = selected && matchPlace(preferences, selected);
+  const hasPreferences = preferences.needs.length + preferences.place_categories.length > 0;
+  const matches = searchResults.map((place) => ({ place, ...matchPlace(preferences, place) }));
+  if (sortByMatch && hasPreferences) {
+    matches.sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || Number(b.categoryMatches) - Number(a.categoryMatches));
+  }
 
   return (
     <>
-      {/* Floating Search Bar (Google Maps Style) */}
-      <div className="place-search-container" ref={searchContainerRef}>
+      <div className="place-search-toolbar">
+      <div className="place-search-container" ref={searchContainerRef} onKeyDown={(event) => {
+        if (event.key === "Escape" && isDropdownOpen) {
+          event.preventDefault();
+          searchInputRef.current?.focus();
+          setIsDropdownOpen(false);
+        }
+      }}>
         <div className="place-search-input-box">
           <Search size={18} className="place-search-icon" aria-hidden="true" />
           <input
             ref={searchInputRef}
-            type="text"
+            type="search"
             className="place-search-input"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -337,18 +358,13 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
               if (searchQuery.trim().length > 0) setIsDropdownOpen(true);
             }}
             onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setIsDropdownOpen(false);
-              } else if (e.key === "Enter" && searchResults.length > 0 && isDropdownOpen) {
-                handleSelectPlace(searchResults[0]);
+              if (e.key === "Enter" && matches.length > 0 && isDropdownOpen) {
+                handleSelectPlace(matches[0].place);
               }
             }}
             placeholder="Cari tempat, alamat, atau kategori..."
             aria-label="Cari tempat di peta"
-            role="combobox"
-            aria-expanded={isDropdownOpen}
-            aria-haspopup="listbox"
-            aria-controls="place-search-results"
+            aria-controls={isDropdownOpen && searchQuery.trim() ? "place-search-results" : undefined}
           />
           {isSearching ? (
             <Loader2 size={16} className="place-search-spinner" aria-label="Mencari tempat..." />
@@ -365,23 +381,41 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
           ) : null}
         </div>
 
-        {/* Dropdown Hasil Pencarian */}
         {isDropdownOpen && searchQuery.trim().length > 0 && (
-          <div id="place-search-results" className="place-search-dropdown" role="listbox">
-            {isSearching && searchResults.length === 0 ? (
-              <div className="place-search-loading">
+          <div id="place-search-results" className="place-search-dropdown" role="region" aria-label="Hasil pencarian tempat">
+            {isSearching ? (
+              <div className="place-search-loading" role="status">
                 <Loader2 size={18} className="place-search-spinner" />
                 <span>Mencari lokasi di Jakarta…</span>
+              </div>
+            ) : searchError ? (
+              <div className="place-search-empty">
+                <p className="error" role="alert">Hasil pencarian belum bisa dimuat.</p>
+                <button type="button" className="text-button" onClick={() => {
+                  searchInputRef.current?.focus();
+                  setIsSearching(true);
+                  setSearchAttempt((attempt) => attempt + 1);
+                }}>Cari lagi</button>
               </div>
             ) : searchResults.length === 0 && hasSearched ? (
               <div className="place-search-empty" role="status">
                 <p className="place-search-empty-title">Tempat tidak ditemukan</p>
                 <p className="small muted">Coba cari dengan nama tempat, jalan, atau kategori lain.</p>
               </div>
-            ) : (
+            ) : matches.length > 0 && (
+              <>
+              {hasPreferences && (
+                <label className="place-search-sort small">
+                  Urutkan hasil
+                  <select value={sortByMatch ? "match" : "relevance"} onChange={(event) => setSortByMatch(event.target.value === "match")}>
+                    <option value="relevance">Relevansi pencarian</option>
+                    <option value="match">Kecocokan preferensi</option>
+                  </select>
+                </label>
+              )}
               <ul className="place-search-list">
-                {searchResults.map((place) => (
-                  <li key={place.id} role="option" aria-selected={selected?.id === place.id}>
+                {matches.map(({ place, score, categoryMatches }) => (
+                  <li key={place.id}>
                     <button
                       type="button"
                       className="place-search-item-btn"
@@ -397,6 +431,14 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
                         <p className="place-search-item-sub small muted">
                           {[place.category, place.address].filter(Boolean).join(" · ")}
                         </p>
+                        {(preferences.needs.length > 0 || categoryMatches) && (
+                          <p className="place-search-match small">
+                            {preferences.needs.length > 0 && (score === null
+                              ? <span className="muted">Data fasilitas belum cukup</span>
+                              : <span className="place-match-score"><strong>{score}%</strong> kecocokan fasilitas</span>)}
+                            {categoryMatches && <span>Jenis pilihanmu</span>}
+                          </p>
+                        )}
                       </div>
                       <div className="place-search-item-status-wrapper">
                         <span
@@ -414,13 +456,15 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
                   </li>
                 ))}
               </ul>
+              </>
             )}
           </div>
         )}
       </div>
+      <PreferencesPanel preferences={preferences} unavailable={preferencesUnavailable} />
+      </div>
 
-      {/* Legenda & Daftar Tempat Area Peta */}
-      <section className="places-panel" aria-label="Legenda dan daftar tempat">
+      {map && <section className="places-panel" aria-label="Legenda dan daftar tempat">
         <h2 className="places-panel-title">Status aksesibilitas</h2>
         <ul className="places-legend">
           {counts.map(({ status, total }) => (
@@ -479,7 +523,7 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
             kontributor OpenStreetMap
           </a>
         </p>
-      </section>
+      </section>}
 
       {/* Preview Card Tempat yang Dipilih */}
       {selected && (
@@ -544,6 +588,27 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
             <strong>{accessibilityStatusMeta[selected.accessibilityStatus].label}</strong>
           </div>
 
+          {selectedMatch && hasPreferences && (
+            <section className="place-match-details">
+              <h3>Kecocokan preferensi</h3>
+              {selectedMatch.categoryMatches && <p className="small">Termasuk jenis tempat pilihanmu.</p>}
+              {selectedMatch.facilities.length > 0 && (
+                <>
+                  <p className="small">{selectedMatch.score === null ? "Data fasilitas belum cukup untuk dihitung." : (
+                    <span className="place-match-overview"><strong>{selectedMatch.score}%</strong> kecocokan fasilitas</span>
+                  )}</p>
+                  <dl>
+                    {selectedMatch.facilities.map(({ need, label, status }) => (
+                      <div key={need}><dt>{label}</dt><dd>{status}</dd></div>
+                    ))}
+                  </dl>
+                  {selectedMatch.score !== null && <p className="small muted">Skor menghitung fasilitas yang tercatat tersedia sesuai urutan prioritasmu.</p>}
+                </>
+              )}
+              {!selectedMatch.facilities.length && !selectedMatch.categoryMatches && <p className="small">Di luar jenis tempat pilihanmu.</p>}
+            </section>
+          )}
+
           <div className="place-card-facilities">
             <h3 className="place-card-facilities-title small">Fasilitas Aksesibilitas</h3>
             {attributes.length ? (
@@ -576,6 +641,6 @@ function PlaceLayer({ map, savedPlaceIds }: { map: MapLibreMap; savedPlaceIds: s
   );
 }
 
-export function AccessibilityMap({ savedPlaceIds, ...props }: { center: [number, number]; zoom: number; label: string; savedPlaceIds: string[] }) {
-  return <Map {...props}>{(map) => <PlaceLayer map={map} savedPlaceIds={savedPlaceIds} />}</Map>;
+export function AccessibilityMap({ center, zoom, label, ...props }: PlaceLayerProps & { center: [number, number]; zoom: number; label: string }) {
+  return <Map center={center} zoom={zoom} label={label}>{(map) => <PlaceLayer map={map} {...props} />}</Map>;
 }
