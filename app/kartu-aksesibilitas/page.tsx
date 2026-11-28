@@ -290,6 +290,36 @@ function CardDetailSection({
         </div>
       )}
 
+      {card.card_number && card.qr_token && card.status === "verified" && (
+        <div className="notice" role="region" aria-label="Kartu Digital Terbit">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <p className="small muted">NOMOR KARTU DIGITAL</p>
+              <strong>{card.card_number}</strong>
+              {card.expires_at && (
+                <p className="small muted">Berlaku hingga {formatDateId(card.expires_at)}</p>
+              )}
+              <Link
+                className="inline-link"
+                href={`/kartu/verifikasi/${card.qr_token}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Lihat halaman verifikasi QR
+              </Link>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/kartu-aksesibilitas/qr/${card.id}`}
+              alt={`Kode QR ${card.card_number}`}
+              width={120}
+              height={120}
+              style={{ background: "white", padding: "6px", borderRadius: "8px", border: "1px solid var(--border)" }}
+            />
+          </div>
+        </div>
+      )}
+
       <dl className="account-details">
         <div>
           <dt>Nama pada kartu</dt>

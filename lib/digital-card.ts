@@ -148,6 +148,11 @@ export type DigitalCardRow = {
   updated_at: string;
   verified_at: string | null;
   cancelled_at: string | null;
+  card_number?: string | null;
+  qr_token?: string | null;
+  issued_at?: string | null;
+  expires_at?: string | null;
+  revoked_at?: string | null;
 };
 
 export type CardEvidenceRow = {
@@ -273,6 +278,14 @@ export type BackendCardApplication = {
   cancelledAt: string | null;
   evidence: BackendCardEvidence | null;
   documents?: BackendCardEvidence[];
+  issuedCard?: {
+    cardNumber: string;
+    qrToken: string;
+    issuedAt: string;
+    expiresAt: string;
+    revokedAt: string | null;
+    state: "active" | "expired" | "revoked";
+  } | null;
 };
 
 export type BackendCardNotification = {
@@ -309,6 +322,11 @@ export function mapBackendCardToRow(item: BackendCardApplication): {
       updated_at: item.updatedAt,
       verified_at: item.verifiedAt,
       cancelled_at: item.cancelledAt,
+      card_number: item.issuedCard?.cardNumber ?? null,
+      qr_token: item.issuedCard?.qrToken ?? null,
+      issued_at: item.issuedCard?.issuedAt ?? null,
+      expires_at: item.issuedCard?.expiresAt ?? null,
+      revoked_at: item.issuedCard?.revokedAt ?? null,
     },
     evidence: (item.documents ?? (item.evidence ? [item.evidence] : [])).map((document) => ({
       id: document.id,

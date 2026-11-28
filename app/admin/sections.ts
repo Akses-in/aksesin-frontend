@@ -13,6 +13,13 @@ export const adminSections = [
     next: "Status impor dan daftar tempat akan tampil setelah backend terhubung.",
   },
   {
+    slug: "kartu-digital",
+    title: "Kartu digital",
+    heading: "Verifikasi & penerbitan kartu digital",
+    description: "Tinjau pengajuan Digital Accessibility Card, terbitkan kartu beserta QR verifikasi, serta kelola masa berlaku dan pencabutan.",
+    next: "Daftar pengajuan kartu akan tampil setelah backend terhubung.",
+  },
+  {
     slug: "pengguna",
     title: "Pengguna",
     description: "Tinjau akun yang terdaftar di Aksesin.",

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test lib/profile.test.mts"
+    "test": "node --test lib/profile.test.mts lib/card-review.test.mts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

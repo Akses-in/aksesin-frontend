@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { OsmImportSection } from "../_impor-osm/osm-import-section";
+import { CardQueueSection } from "../_kartu-digital/card-queue-section";
 import { adminSections } from "../sections";
 import { AdminWorkspace } from "../workspace";
 
@@ -17,6 +18,13 @@ async function Section({ params, searchParams }: Pick<PageProps<"/admin/[bagian]
     return (
       <AdminWorkspace section={section}>
         <OsmImportSection searchParams={await searchParams} />
+      </AdminWorkspace>
+    );
+  }
+  if (section.slug === "kartu-digital") {
+    return (
+      <AdminWorkspace section={section}>
+        <CardQueueSection searchParams={await searchParams} />
       </AdminWorkspace>
     );
   }
